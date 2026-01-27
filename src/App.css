@@ -1,0 +1,555 @@
+/* App Layout */
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #8b0000;
+}
+
+.app-header h1 {
+  color: #8b0000;
+  margin: 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  color: #666;
+  margin: 0.5rem 0 0;
+}
+
+.app-main {
+  flex: 1;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 1rem;
+  color: #888;
+  font-size: 0.875rem;
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+}
+
+/* Setup Grid */
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Setup Sections */
+.setup-section {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.empty-state {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Combatant Table */
+.combatant-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.combatant-table th,
+.combatant-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.combatant-table th {
+  background: #eee;
+  font-weight: 600;
+}
+
+.combatant-table td.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #8b0000;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #a00;
+}
+
+.btn-secondary {
+  background: #666;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #888;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.btn-large {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1rem;
+}
+
+.btn-icon:hover {
+  opacity: 0.7;
+}
+
+/* Form */
+.form-container {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.form-container h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.combatant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-row input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.form-row input:focus {
+  outline: none;
+  border-color: #8b0000;
+}
+
+.form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.error {
+  color: #c00;
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+.warning {
+  color: #c60;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+/* Simulation Controls */
+.simulation-controls {
+  background: #333;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.simulation-controls form {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.simulation-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.simulation-controls input {
+  padding: 0.5rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #444;
+  color: white;
+  font-size: 1rem;
+  width: 100px;
+}
+
+.simulation-controls .warning {
+  text-align: center;
+  color: #ffa500;
+}
+
+/* Results Section */
+.results-section {
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.results-section h2 {
+  margin: 0 0 1rem;
+  color: #333;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Results Summary */
+.results-summary {
+  margin-bottom: 2rem;
+}
+
+.win-percentage-container {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.win-percentage {
+  font-size: 4rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.win-high {
+  color: #228b22;
+}
+
+.win-medium {
+  color: #daa520;
+}
+
+.win-low {
+  color: #dc143c;
+}
+
+.win-label {
+  font-size: 1.25rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.win-details {
+  font-size: 0.875rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.stats-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 1rem 0;
+}
+
+.stat {
+  text-align: center;
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+}
+
+/* Survivors */
+.survivors {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.survivors h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.survivor-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.survivor-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.survivor-name {
+  width: 100px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.survivor-bar-container {
+  flex: 1;
+  height: 20px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.survivor-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #228b22, #32cd32);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.survivor-pct {
+  width: 40px;
+  text-align: right;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* Fight Log */
+.fight-log {
+  margin-top: 1rem;
+}
+
+.fight-log h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.fight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.fight-item {
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fight-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.fight-header:hover {
+  background: #f5f5f5;
+}
+
+.fight-header.party-won {
+  border-left: 4px solid #228b22;
+}
+
+.fight-header.party-lost {
+  border-left: 4px solid #dc143c;
+}
+
+.fight-id {
+  color: #888;
+  font-weight: 500;
+  width: 50px;
+}
+
+.fight-outcome {
+  font-weight: 600;
+  width: 60px;
+}
+
+.fight-outcome.win {
+  color: #228b22;
+}
+
+.fight-outcome.loss {
+  color: #dc143c;
+}
+
+.fight-rounds {
+  color: #666;
+  width: 80px;
+}
+
+.fight-survivors {
+  flex: 1;
+  color: #888;
+}
+
+.expand-icon {
+  color: #888;
+}
+
+/* Fight Details */
+.fight-details {
+  padding: 1rem;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+.survivors-info {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.survivors-info p {
+  margin: 0;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.log-table th,
+.log-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.log-table th {
+  background: #f0f0f0;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.log-table tr.log-hit {
+  background: #f0fff0;
+}
+
+.log-table tr.log-miss {
+  background: #f5f5f5;
+  color: #888;
+}
+
+.log-table tr.log-death {
+  background: #fff0f0;
+}
+
+.damage {
+  color: #228b22;
+  font-weight: 600;
+}
+
+.miss {
+  color: #888;
+  font-style: italic;
+}
+
+.downed {
+  color: #dc143c;
+  font-weight: bold;
+}
