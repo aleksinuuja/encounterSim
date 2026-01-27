@@ -568,3 +568,78 @@
   color: #dc143c;
   font-weight: bold;
 }
+
+/* Death Save Styles */
+.log-table tr.log-death-save-success {
+  background: #f0f0f5;
+}
+
+.log-table tr.log-death-save-failure {
+  background: #f5f0f0;
+}
+
+.log-table tr.log-died {
+  background: #3d0000;
+  color: #ff6b6b;
+}
+
+.log-table tr.log-stabilized {
+  background: #e8f5e9;
+}
+
+.log-table tr.log-nat20-recovery {
+  background: #fff8e1;
+}
+
+.log-table tr.log-revive {
+  background: #e3f2fd;
+}
+
+.death-save-label {
+  color: #6a5acd;
+  font-weight: 600;
+  text-align: center;
+}
+
+.death-save-success {
+  color: #228b22;
+  font-weight: 600;
+}
+
+.death-save-failure {
+  color: #dc143c;
+  font-weight: 600;
+}
+
+.death-save-tally {
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.death-save-tally .successes {
+  color: #228b22;
+}
+
+.death-save-tally .failures {
+  color: #dc143c;
+}
+
+.stabilized {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.died {
+  color: #b71c1c;
+  font-weight: bold;
+}
+
+.nat20-recovery {
+  color: #f9a825;
+  font-weight: bold;
+}
+
+.revived {
+  color: #1565c0;
+  font-weight: 600;
+}

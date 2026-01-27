@@ -14,7 +14,12 @@ function rollInitiative(combatants) {
   const withInitiative = combatants.map(c => ({
     ...c,
     currentHp: c.maxHp,
-    initiativeRoll: rollD20() + c.initiativeBonus
+    initiativeRoll: rollD20() + c.initiativeBonus,
+    isUnconscious: false,
+    isStabilized: false,
+    isDead: false,
+    deathSaveSuccesses: 0,
+    deathSaveFailures: 0
   }))
 
   // Sort by initiative (descending)
@@ -40,8 +45,8 @@ function rollInitiative(combatants) {
  * @returns {{ shouldContinue: boolean, partyWon: boolean|null }}
  */
 function checkCombatStatus(combatants) {
-  const livingPlayers = combatants.filter(c => c.isPlayer && c.currentHp > 0)
-  const livingMonsters = combatants.filter(c => !c.isPlayer && c.currentHp > 0)
+  const livingPlayers = combatants.filter(c => c.isPlayer && !c.isDead)
+  const livingMonsters = combatants.filter(c => !c.isPlayer && !c.isDead)
 
   if (livingPlayers.length === 0) {
     return { shouldContinue: false, partyWon: false }
@@ -50,6 +55,67 @@ function checkCombatStatus(combatants) {
     return { shouldContinue: false, partyWon: true }
   }
   return { shouldContinue: true, partyWon: null }
+}
+
+/**
+ * Roll a death saving throw for an unconscious combatant
+ * @param {object} combatant - The unconscious combatant
+ * @param {number} round - Current round number
+ * @param {number} turn - Current turn number within the round
+ * @returns {object} - Log entry for this death save
+ */
+function rollDeathSave(combatant, round, turn) {
+  const roll = rollD20()
+
+  const logEntry = {
+    round,
+    turn,
+    actorName: combatant.name,
+    actionType: 'deathSave',
+    deathSaveRoll: roll,
+    deathSaveSuccess: roll >= 10,
+    deathSaveSuccesses: combatant.deathSaveSuccesses,
+    deathSaveFailures: combatant.deathSaveFailures,
+    stabilized: false,
+    died: false,
+    recoveredFromNat20: false
+  }
+
+  if (roll === 20) {
+    // Natural 20: wake up with 1 HP
+    combatant.currentHp = 1
+    combatant.isUnconscious = false
+    combatant.deathSaveSuccesses = 0
+    combatant.deathSaveFailures = 0
+    logEntry.recoveredFromNat20 = true
+    logEntry.deathSaveSuccesses = 0
+    logEntry.deathSaveFailures = 0
+    return logEntry
+  }
+
+  if (roll === 1) {
+    // Natural 1: 2 failures
+    combatant.deathSaveFailures += 2
+  } else if (roll >= 10) {
+    combatant.deathSaveSuccesses += 1
+  } else {
+    combatant.deathSaveFailures += 1
+  }
+
+  logEntry.deathSaveSuccesses = combatant.deathSaveSuccesses
+  logEntry.deathSaveFailures = combatant.deathSaveFailures
+
+  // Check outcomes
+  if (combatant.deathSaveSuccesses >= 3) {
+    combatant.isStabilized = true
+    logEntry.stabilized = true
+  }
+  if (combatant.deathSaveFailures >= 3) {
+    combatant.isDead = true
+    logEntry.died = true
+  }
+
+  return logEntry
 }
 
 /**
@@ -76,6 +142,30 @@ function executeAttack(attacker, target, round, turn) {
     hit: false
   }
 
+  // Handle attacking an unconscious target (auto-hit, causes death save failures)
+  if (target.isUnconscious && !target.isDead) {
+    logEntry.hit = true
+    logEntry.targetHpBefore = target.currentHp
+
+    const isCritical = attackRoll === 20
+    const damage = rollDamage(attacker.damage, isCritical)
+    logEntry.damageRoll = damage
+    logEntry.isCritical = isCritical
+    logEntry.targetHpAfter = 0
+
+    // Damage at 0 HP causes death save failures (melee = 2, ranged = 1)
+    // Assuming melee for simplicity (most attacks are melee)
+    target.deathSaveFailures += 2
+    logEntry.deathSaveFailures = target.deathSaveFailures
+
+    if (target.deathSaveFailures >= 3) {
+      target.isDead = true
+      logEntry.targetDied = true
+    }
+
+    return logEntry
+  }
+
   // Natural 1 always misses
   if (attackRoll === 1) {
     logEntry.hit = false
@@ -97,6 +187,11 @@ function executeAttack(attacker, target, round, turn) {
     target.currentHp = Math.max(0, target.currentHp - damage)
     logEntry.targetHpAfter = target.currentHp
     logEntry.targetDowned = target.currentHp <= 0
+
+    // If target drops to 0 HP, mark them as unconscious
+    if (target.currentHp <= 0) {
+      target.isUnconscious = true
+    }
   }
 
   return logEntry
@@ -113,9 +208,18 @@ function executeAttack(attacker, target, round, turn) {
 function executeHeal(healer, target, round, turn) {
   const { total: healAmount } = rollDice(healer.healingDice)
   const targetHpBefore = target.currentHp
+  const wasUnconscious = target.isUnconscious
 
   // Cannot exceed maxHp
   target.currentHp = Math.min(target.maxHp, target.currentHp + healAmount)
+
+  // If target was unconscious, wake them up and reset death saves
+  if (wasUnconscious) {
+    target.isUnconscious = false
+    target.isStabilized = false
+    target.deathSaveSuccesses = 0
+    target.deathSaveFailures = 0
+  }
 
   return {
     round,
@@ -125,7 +229,8 @@ function executeHeal(healer, target, round, turn) {
     actionType: 'heal',
     healRoll: healAmount,
     targetHpBefore,
-    targetHpAfter: target.currentHp
+    targetHpAfter: target.currentHp,
+    revivedFromUnconscious: wasUnconscious
   }
 }
 
@@ -155,14 +260,52 @@ export function runCombat(party, monsters, simulationId) {
 
     for (const combatant of combatants) {
       // Skip dead combatants
-      if (combatant.currentHp <= 0) {
+      if (combatant.isDead) {
         continue
       }
 
       turnCounter++
       turnInRound++
 
+      // Handle unconscious combatants
+      if (combatant.isUnconscious) {
+        // Stabilized combatants don't roll death saves
+        if (combatant.isStabilized) {
+          continue
+        }
+
+        // Roll death save at start of turn
+        const deathSaveEntry = rollDeathSave(combatant, round, turnInRound)
+        log.push(deathSaveEntry)
+
+        // If they rolled a nat 20, they wake up and can act this turn
+        // Otherwise, their turn ends (can't act while unconscious)
+        if (!deathSaveEntry.recoveredFromNat20) {
+          // Check if they died
+          if (combatant.isDead) {
+            const status = checkCombatStatus(combatants)
+            if (!status.shouldContinue) {
+              return {
+                id: simulationId,
+                partyWon: status.partyWon,
+                totalRounds: round,
+                survivingParty: combatants
+                  .filter(c => c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                survivingMonsters: combatants
+                  .filter(c => !c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                log
+              }
+            }
+          }
+          continue
+        }
+        // If recovered from nat 20, continue to take normal turn
+      }
+
       // Check if combatant should heal instead of attack
+      // Yo-yo healing: only heal unconscious allies
       const healingDice = combatant.healingDice
       if (healingDice) {
         const healTarget = selectHealTarget(combatants, combatant.isPlayer)
@@ -196,10 +339,10 @@ export function runCombat(party, monsters, simulationId) {
             partyWon: status.partyWon,
             totalRounds: round,
             survivingParty: combatants
-              .filter(c => c.isPlayer && c.currentHp > 0)
+              .filter(c => c.isPlayer && !c.isDead)
               .map(c => c.name),
             survivingMonsters: combatants
-              .filter(c => !c.isPlayer && c.currentHp > 0)
+              .filter(c => !c.isPlayer && !c.isDead)
               .map(c => c.name),
             log
           }
@@ -210,12 +353,12 @@ export function runCombat(party, monsters, simulationId) {
     round++
   }
 
-  // If we hit max rounds, determine winner by remaining HP
+  // If we hit max rounds, determine winner by remaining HP (excluding dead)
   const partyHp = combatants
-    .filter(c => c.isPlayer)
+    .filter(c => c.isPlayer && !c.isDead)
     .reduce((sum, c) => sum + Math.max(0, c.currentHp), 0)
   const monsterHp = combatants
-    .filter(c => !c.isPlayer)
+    .filter(c => !c.isPlayer && !c.isDead)
     .reduce((sum, c) => sum + Math.max(0, c.currentHp), 0)
 
   return {
@@ -223,10 +366,10 @@ export function runCombat(party, monsters, simulationId) {
     partyWon: partyHp > monsterHp,
     totalRounds: MAX_ROUNDS,
     survivingParty: combatants
-      .filter(c => c.isPlayer && c.currentHp > 0)
+      .filter(c => c.isPlayer && !c.isDead)
       .map(c => c.name),
     survivingMonsters: combatants
-      .filter(c => !c.isPlayer && c.currentHp > 0)
+      .filter(c => !c.isPlayer && !c.isDead)
       .map(c => c.name),
     log
   }

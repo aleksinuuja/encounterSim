@@ -11,6 +11,52 @@ function FightLog({ results }) {
     setExpandedId(expandedId === id ? null : id)
   }
 
+  const renderDeathSaveResult = (entry) => {
+    if (entry.recoveredFromNat20) {
+      return (
+        <span className="nat20-recovery">
+          NAT 20! Recovers with 1 HP
+        </span>
+      )
+    }
+
+    const successes = '●'.repeat(entry.deathSaveSuccesses) + '○'.repeat(3 - entry.deathSaveSuccesses)
+    const failures = '●'.repeat(entry.deathSaveFailures) + '○'.repeat(3 - Math.min(3, entry.deathSaveFailures))
+
+    return (
+      <>
+        <span className={entry.deathSaveSuccess ? 'death-save-success' : 'death-save-failure'}>
+          {entry.deathSaveRoll}
+          {entry.deathSaveRoll === 1 && ' (2 fails)'}
+        </span>
+        {' '}
+        <span className="death-save-tally">
+          <span className="successes">{successes}</span>
+          {' / '}
+          <span className="failures">{failures}</span>
+        </span>
+        {entry.stabilized && <span className="stabilized"> STABILIZED</span>}
+        {entry.died && <span className="died"> DIED</span>}
+      </>
+    )
+  }
+
+  const getRowClass = (entry) => {
+    if (entry.actionType === 'deathSave') {
+      if (entry.recoveredFromNat20) return 'log-nat20-recovery'
+      if (entry.died) return 'log-died'
+      if (entry.stabilized) return 'log-stabilized'
+      return entry.deathSaveSuccess ? 'log-death-save-success' : 'log-death-save-failure'
+    }
+    if (entry.actionType === 'heal') {
+      return entry.revivedFromUnconscious ? 'log-revive' : 'log-heal'
+    }
+    if (entry.targetDied) return 'log-death'
+    if (entry.targetDowned) return 'log-death'
+    if (entry.hit) return 'log-hit'
+    return 'log-miss'
+  }
+
   return (
     <div className="fight-log">
       <h3>Fight Results</h3>
@@ -59,28 +105,28 @@ function FightLog({ results }) {
                     {result.log.map((entry, idx) => (
                       <tr
                         key={idx}
-                        className={
-                          entry.actionType === 'heal'
-                            ? 'log-heal'
-                            : entry.targetDowned
-                            ? 'log-death'
-                            : entry.hit
-                            ? 'log-hit'
-                            : 'log-miss'
-                        }
+                        className={getRowClass(entry)}
                       >
                         <td>{entry.round}</td>
                         <td>{entry.actorName}</td>
-                        <td>{entry.targetName}</td>
-                        {entry.actionType === 'heal' ? (
+                        <td>{entry.targetName || '—'}</td>
+                        {entry.actionType === 'deathSave' ? (
                           <>
-                            <td colSpan="2" className="heal-label">HEAL</td>
+                            <td colSpan="2" className="death-save-label">DEATH SAVE</td>
+                            <td>{renderDeathSaveResult(entry)}</td>
+                          </>
+                        ) : entry.actionType === 'heal' ? (
+                          <>
+                            <td colSpan="2" className="heal-label">
+                              {entry.revivedFromUnconscious ? 'REVIVE' : 'HEAL'}
+                            </td>
                             <td>
                               <span className="healing">
                                 +{entry.healRoll} HP
                               </span>
                               {' '}
                               ({entry.targetHpBefore} → {entry.targetHpAfter})
+                              {entry.revivedFromUnconscious && <span className="revived"> (back up!)</span>}
                             </td>
                           </>
                         ) : (
@@ -102,6 +148,7 @@ function FightLog({ results }) {
                                   {' '}
                                   ({entry.targetHpBefore} → {entry.targetHpAfter})
                                   {entry.targetDowned && <span className="downed"> DOWNED</span>}
+                                  {entry.targetDied && <span className="died"> DIED</span>}
                                 </>
                               ) : (
                                 <span className="miss">Miss</span>
