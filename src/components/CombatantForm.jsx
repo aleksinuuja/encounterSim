@@ -6,7 +6,9 @@ const defaultCombatant = {
   armorClass: 10,
   attackBonus: 0,
   damage: '1d6',
-  initiativeBonus: 0
+  initiativeBonus: 0,
+  numAttacks: 1,
+  healingDice: ''
 }
 
 function CombatantForm({ combatant, onSave, onCancel }) {
@@ -15,7 +17,13 @@ function CombatantForm({ combatant, onSave, onCancel }) {
 
   useEffect(() => {
     if (combatant) {
-      setForm(combatant)
+      // Handle migration: ensure new fields have defaults
+      setForm({
+        ...defaultCombatant,
+        ...combatant,
+        numAttacks: combatant.numAttacks || 1,
+        healingDice: combatant.healingDice || ''
+      })
     } else {
       setForm(defaultCombatant)
     }
@@ -44,6 +52,12 @@ function CombatantForm({ combatant, onSave, onCancel }) {
     }
     if (!form.damage.match(/^\d+d\d+([+-]\d+)?$/i)) {
       newErrors.damage = 'Invalid dice notation (e.g., 1d8+4)'
+    }
+    if (form.numAttacks < 1) {
+      newErrors.numAttacks = 'Must be at least 1'
+    }
+    if (form.healingDice && !form.healingDice.match(/^\d+d\d+([+-]\d+)?$/i)) {
+      newErrors.healingDice = 'Invalid dice notation (e.g., 1d8+3)'
     }
 
     setErrors(newErrors)
@@ -121,7 +135,7 @@ function CombatantForm({ combatant, onSave, onCancel }) {
         </label>
       </div>
 
-      <div className="form-row">
+      <div className="form-row form-row-grid">
         <label>
           Damage
           <input
@@ -132,6 +146,32 @@ function CombatantForm({ combatant, onSave, onCancel }) {
             placeholder="e.g., 1d8+4"
           />
           {errors.damage && <span className="error">{errors.damage}</span>}
+        </label>
+
+        <label>
+          # of Attacks
+          <input
+            type="number"
+            name="numAttacks"
+            value={form.numAttacks}
+            onChange={handleChange}
+            min="1"
+          />
+          {errors.numAttacks && <span className="error">{errors.numAttacks}</span>}
+        </label>
+      </div>
+
+      <div className="form-row">
+        <label>
+          Healing (optional)
+          <input
+            type="text"
+            name="healingDice"
+            value={form.healingDice}
+            onChange={handleChange}
+            placeholder="e.g., 1d8+3 (leave empty if none)"
+          />
+          {errors.healingDice && <span className="error">{errors.healingDice}</span>}
         </label>
       </div>
 

@@ -2,8 +2,8 @@
  * Main combat simulation engine
  */
 
-import { rollD20, rollDamage } from './dice.js'
-import { selectTarget } from './targeting.js'
+import { rollD20, rollDamage, rollDice } from './dice.js'
+import { selectTarget, selectHealTarget } from './targeting.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -69,6 +69,7 @@ function executeAttack(attacker, target, round, turn) {
     turn,
     actorName: attacker.name,
     targetName: target.name,
+    actionType: 'attack',
     attackRoll,
     totalAttack,
     targetAC: target.armorClass,
@@ -102,6 +103,33 @@ function executeAttack(attacker, target, round, turn) {
 }
 
 /**
+ * Execute a heal action
+ * @param {object} healer - The healing combatant
+ * @param {object} target - The target ally to heal
+ * @param {number} round - Current round number
+ * @param {number} turn - Current turn number within the round
+ * @returns {object} - Log entry for this heal
+ */
+function executeHeal(healer, target, round, turn) {
+  const { total: healAmount } = rollDice(healer.healingDice)
+  const targetHpBefore = target.currentHp
+
+  // Cannot exceed maxHp
+  target.currentHp = Math.min(target.maxHp, target.currentHp + healAmount)
+
+  return {
+    round,
+    turn,
+    actorName: healer.name,
+    targetName: target.name,
+    actionType: 'heal',
+    healRoll: healAmount,
+    targetHpBefore,
+    targetHpAfter: target.currentHp
+  }
+}
+
+/**
  * Run a single combat simulation
  * @param {Array} party - Array of player combatants
  * @param {Array} monsters - Array of monster combatants
@@ -131,34 +159,50 @@ export function runCombat(party, monsters, simulationId) {
         continue
       }
 
-      // Find a target
-      const target = selectTarget(combatants, combatant.isPlayer)
-      if (!target) {
-        // Combat is over
-        break
-      }
-
       turnCounter++
       turnInRound++
 
-      // Execute the attack
-      const logEntry = executeAttack(combatant, target, round, turnInRound)
-      log.push(logEntry)
+      // Check if combatant should heal instead of attack
+      const healingDice = combatant.healingDice
+      if (healingDice) {
+        const healTarget = selectHealTarget(combatants, combatant.isPlayer)
+        if (healTarget) {
+          // Heal instead of attacking
+          const logEntry = executeHeal(combatant, healTarget, round, turnInRound)
+          log.push(logEntry)
+          continue
+        }
+      }
 
-      // Check if combat is over
-      const status = checkCombatStatus(combatants)
-      if (!status.shouldContinue) {
-        return {
-          id: simulationId,
-          partyWon: status.partyWon,
-          totalRounds: round,
-          survivingParty: combatants
-            .filter(c => c.isPlayer && c.currentHp > 0)
-            .map(c => c.name),
-          survivingMonsters: combatants
-            .filter(c => !c.isPlayer && c.currentHp > 0)
-            .map(c => c.name),
-          log
+      // Execute attacks (multi-attack support)
+      const numAttacks = combatant.numAttacks || 1
+      for (let attackNum = 0; attackNum < numAttacks; attackNum++) {
+        // Find a target for this attack
+        const target = selectTarget(combatants, combatant.isPlayer)
+        if (!target) {
+          // Combat is over
+          break
+        }
+
+        // Execute the attack
+        const logEntry = executeAttack(combatant, target, round, turnInRound)
+        log.push(logEntry)
+
+        // Check if combat is over
+        const status = checkCombatStatus(combatants)
+        if (!status.shouldContinue) {
+          return {
+            id: simulationId,
+            partyWon: status.partyWon,
+            totalRounds: round,
+            survivingParty: combatants
+              .filter(c => c.isPlayer && c.currentHp > 0)
+              .map(c => c.name),
+            survivingMonsters: combatants
+              .filter(c => !c.isPlayer && c.currentHp > 0)
+              .map(c => c.name),
+            log
+          }
         }
       }
     }

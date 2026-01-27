@@ -11,7 +11,9 @@ export const exampleParty = [
     attackBonus: 7,
     damage: '1d8+4',
     initiativeBonus: 2,
-    isPlayer: true
+    isPlayer: true,
+    numAttacks: 2,
+    healingDice: null
   },
   {
     id: 'rogue-1',
@@ -21,7 +23,9 @@ export const exampleParty = [
     attackBonus: 7,
     damage: '1d6+4',
     initiativeBonus: 4,
-    isPlayer: true
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: null
   },
   {
     id: 'cleric-1',
@@ -31,7 +35,9 @@ export const exampleParty = [
     attackBonus: 6,
     damage: '1d8+3',
     initiativeBonus: 0,
-    isPlayer: true
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: '1d8+3'
   },
   {
     id: 'sorcerer-1',
@@ -41,7 +47,9 @@ export const exampleParty = [
     attackBonus: 7,
     damage: '1d10+4',
     initiativeBonus: 2,
-    isPlayer: true
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: null
   },
   {
     id: 'ranger-1',
@@ -51,7 +59,9 @@ export const exampleParty = [
     attackBonus: 7,
     damage: '1d8+4',
     initiativeBonus: 3,
-    isPlayer: true
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: null
   }
 ]
 
@@ -64,7 +74,9 @@ export const exampleMonsters = [
     attackBonus: 5,
     damage: '1d12+3',
     initiativeBonus: 1,
-    isPlayer: false
+    isPlayer: false,
+    numAttacks: 1,
+    healingDice: null
   },
   {
     id: 'orc-2',
@@ -74,7 +86,9 @@ export const exampleMonsters = [
     attackBonus: 5,
     damage: '1d12+3',
     initiativeBonus: 1,
-    isPlayer: false
+    isPlayer: false,
+    numAttacks: 1,
+    healingDice: null
   },
   {
     id: 'orc-3',
@@ -84,7 +98,9 @@ export const exampleMonsters = [
     attackBonus: 5,
     damage: '1d12+3',
     initiativeBonus: 1,
-    isPlayer: false
+    isPlayer: false,
+    numAttacks: 1,
+    healingDice: null
   },
   {
     id: 'orc-4',
@@ -94,6 +110,8 @@ export const exampleMonsters = [
     attackBonus: 5,
     damage: '1d12+3',
     initiativeBonus: 1,
-    isPlayer: false
+    isPlayer: false,
+    numAttacks: 1,
+    healingDice: null
   }
 ]

@@ -539,9 +539,24 @@
   background: #fff0f0;
 }
 
+.log-table tr.log-heal {
+  background: #e6f3ff;
+}
+
 .damage {
   color: #228b22;
   font-weight: 600;
+}
+
+.healing {
+  color: #1e90ff;
+  font-weight: 600;
+}
+
+.heal-label {
+  color: #1e90ff;
+  font-weight: 600;
+  text-align: center;
 }
 
 .miss {

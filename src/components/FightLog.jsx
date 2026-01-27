@@ -48,7 +48,7 @@ function FightLog({ results }) {
                   <thead>
                     <tr>
                       <th>Rnd</th>
-                      <th>Attacker</th>
+                      <th>Actor</th>
                       <th>Target</th>
                       <th>Roll</th>
                       <th>vs AC</th>
@@ -60,7 +60,9 @@ function FightLog({ results }) {
                       <tr
                         key={idx}
                         className={
-                          entry.targetDowned
+                          entry.actionType === 'heal'
+                            ? 'log-heal'
+                            : entry.targetDowned
                             ? 'log-death'
                             : entry.hit
                             ? 'log-hit'
@@ -70,28 +72,43 @@ function FightLog({ results }) {
                         <td>{entry.round}</td>
                         <td>{entry.actorName}</td>
                         <td>{entry.targetName}</td>
-                        <td>
-                          {entry.attackRoll}
-                          {entry.attackRoll === 20 && ' (CRIT)'}
-                          {entry.attackRoll === 1 && ' (FUMBLE)'}
-                          {' → '}{entry.totalAttack}
-                        </td>
-                        <td>{entry.targetAC}</td>
-                        <td>
-                          {entry.hit ? (
-                            <>
-                              <span className="damage">
-                                {entry.damageRoll} dmg
-                                {entry.isCritical && '!'}
+                        {entry.actionType === 'heal' ? (
+                          <>
+                            <td colSpan="2" className="heal-label">HEAL</td>
+                            <td>
+                              <span className="healing">
+                                +{entry.healRoll} HP
                               </span>
                               {' '}
                               ({entry.targetHpBefore} → {entry.targetHpAfter})
-                              {entry.targetDowned && <span className="downed"> DOWNED</span>}
-                            </>
-                          ) : (
-                            <span className="miss">Miss</span>
-                          )}
-                        </td>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td>
+                              {entry.attackRoll}
+                              {entry.attackRoll === 20 && ' (CRIT)'}
+                              {entry.attackRoll === 1 && ' (FUMBLE)'}
+                              {' → '}{entry.totalAttack}
+                            </td>
+                            <td>{entry.targetAC}</td>
+                            <td>
+                              {entry.hit ? (
+                                <>
+                                  <span className="damage">
+                                    {entry.damageRoll} dmg
+                                    {entry.isCritical && '!'}
+                                  </span>
+                                  {' '}
+                                  ({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.targetDowned && <span className="downed"> DOWNED</span>}
+                                </>
+                              ) : (
+                                <span className="miss">Miss</span>
+                              )}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
