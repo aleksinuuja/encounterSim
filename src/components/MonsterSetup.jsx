@@ -1,15 +1,36 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import CombatantForm from './CombatantForm'
 import { exampleMonsters } from '../data/examples'
+import { monsterPresets } from '../data/monsterPresets'
 import { generateId } from '../utils/ids'
 
 function MonsterSetup({ monsters, setMonsters }) {
   const [showForm, setShowForm] = useState(false)
   const [editingCombatant, setEditingCombatant] = useState(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef(null)
 
-  const handleAdd = () => {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleAddCustom = () => {
     setEditingCombatant(null)
     setShowForm(true)
+    setShowDropdown(false)
+  }
+
+  const handleAddPreset = (preset) => {
+    const { key, description, ...monsterData } = preset
+    setMonsters([...monsters, { ...monsterData, id: generateId('monster'), isPlayer: false }])
+    setShowDropdown(false)
   }
 
   const handleEdit = (combatant) => {
@@ -50,9 +71,38 @@ function MonsterSetup({ monsters, setMonsters }) {
           <button className="btn btn-secondary btn-sm" onClick={loadExample}>
             Load Example
           </button>
-          <button className="btn btn-primary btn-sm" onClick={handleAdd}>
-            + Add
-          </button>
+          <div className="dropdown" ref={dropdownRef}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              + Add ▾
+            </button>
+            {showDropdown && (
+              <div className="dropdown-menu">
+                <button
+                  className="dropdown-item dropdown-item-custom"
+                  onClick={handleAddCustom}
+                >
+                  Custom...
+                </button>
+                <div className="dropdown-divider" />
+                {monsterPresets.map(preset => (
+                  <button
+                    key={preset.key}
+                    className="dropdown-item"
+                    onClick={() => handleAddPreset(preset)}
+                    title={preset.description}
+                  >
+                    <span className="preset-name">{preset.name}</span>
+                    <span className="preset-stats">
+                      HP {preset.maxHp} / AC {preset.armorClass}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
