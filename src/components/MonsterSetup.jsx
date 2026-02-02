@@ -124,7 +124,17 @@ function MonsterSetup({ monsters, setMonsters }) {
           <tbody>
             {monsters.map(c => (
               <tr key={c.id}>
-                <td>{c.name}</td>
+                <td>
+                  {c.name}
+                  {c.onHitEffect && (
+                    <span
+                      className="effect-badge"
+                      title={`On hit: ${c.onHitEffect.condition} (DC ${c.onHitEffect.saveDC} ${c.onHitEffect.saveAbility?.toUpperCase()}, ${c.onHitEffect.duration} rounds)`}
+                    >
+                      {c.onHitEffect.condition}
+                    </span>
+                  )}
+                </td>
                 <td>{c.maxHp}</td>
                 <td>{c.armorClass}</td>
                 <td>+{c.attackBonus}</td>

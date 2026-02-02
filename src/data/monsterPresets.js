@@ -18,9 +18,14 @@ export const monsterPresets = [
       condition: 'poisoned',
       duration: 3,
       saveDC: 11,
-      saveAbility: 'constitution'
+      saveAbility: 'constitution',
+      // Can repeat save at end of each turn
+      saveEndOfTurn: {
+        ability: 'constitution',
+        dc: 11
+      }
     },
-    description: 'Poison bite (DC 11 CON, 3 rounds)'
+    description: 'Poison bite (DC 11 CON, save each turn)'
   },
   {
     key: 'orc',

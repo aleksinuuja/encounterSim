@@ -53,6 +53,7 @@ function FightLog({ results }) {
     }
     if (entry.actionType === 'conditionApplied') return 'log-condition-applied'
     if (entry.actionType === 'conditionExpired') return 'log-condition-expired'
+    if (entry.actionType === 'conditionSave') return entry.savePassed ? 'log-condition-save-passed' : 'log-condition-save-failed'
     if (entry.actionType === 'incapacitated') return 'log-incapacitated'
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
@@ -163,6 +164,27 @@ function FightLog({ results }) {
                                 {entry.condition.toUpperCase()}
                               </span>
                               {' expired'}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'conditionSave' ? (
+                          <>
+                            <td colSpan="2" className="condition-save-label">
+                              {entry.saveAbility?.toUpperCase()} SAVE
+                            </td>
+                            <td>
+                              <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                {entry.saveRoll} → {entry.saveTotal} vs DC {entry.saveDC}
+                              </span>
+                              {' '}
+                              {entry.savePassed ? (
+                                <span className="condition-cured">
+                                  {entry.condition} cured!
+                                </span>
+                              ) : (
+                                <span className="condition-remains">
+                                  {entry.condition} remains
+                                </span>
+                              )}
                             </td>
                           </>
                         ) : entry.actionType === 'incapacitated' ? (

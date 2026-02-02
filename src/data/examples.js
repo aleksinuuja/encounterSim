@@ -82,7 +82,11 @@ export const exampleMonsters = [
       condition: 'poisoned',
       duration: 3,
       saveDC: 11,
-      saveAbility: 'constitution'
+      saveAbility: 'constitution',
+      saveEndOfTurn: {
+        ability: 'constitution',
+        dc: 11
+      }
     }
   },
   {

@@ -122,6 +122,45 @@ export function removeCondition(combatant, conditionType) {
 }
 
 /**
+ * Process end-of-turn saving throws for conditions
+ * @param {object} combatant - The combatant to process
+ * @param {function} rollD20 - D20 roll function
+ * @returns {Array<{type: string, roll: number, dc: number, saved: boolean}>}
+ */
+export function processEndOfTurnSaves(combatant, rollD20) {
+  if (!combatant.conditions || combatant.conditions.length === 0) {
+    return []
+  }
+
+  const saveResults = []
+
+  combatant.conditions = combatant.conditions.filter(condition => {
+    if (!condition.saveEndOfTurn) {
+      return true // No save available for this condition
+    }
+
+    const { ability, dc } = condition.saveEndOfTurn
+    const roll = rollD20()
+    const saveBonus = combatant[ability + 'Save'] || 0
+    const total = roll + saveBonus
+    const saved = total >= dc
+
+    saveResults.push({
+      type: condition.type,
+      roll,
+      total,
+      dc,
+      ability,
+      saved
+    })
+
+    return !saved // Keep condition if save failed
+  })
+
+  return saveResults
+}
+
+/**
  * Process end-of-turn duration ticks for a combatant
  * Decrements duration and removes expired conditions
  * @param {object} combatant - The combatant to process

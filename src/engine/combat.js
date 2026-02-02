@@ -8,6 +8,7 @@ import {
   canAct,
   getCombinedModifier,
   tickConditions,
+  processEndOfTurnSaves,
   applyCondition,
   hasCondition
 } from './conditions.js'
@@ -301,6 +302,44 @@ function executeHeal(healer, target, round, turn) {
 }
 
 /**
+ * Process end-of-turn effects: saving throws and duration ticks
+ * @param {object} combatant - The combatant to process
+ * @param {number} round - Current round
+ * @param {number} turn - Current turn
+ * @param {Array} log - Combat log to append to
+ */
+function processEndOfTurn(combatant, round, turn, log) {
+  // First, process saving throws to break conditions
+  const saveResults = processEndOfTurnSaves(combatant, rollD20)
+  saveResults.forEach(result => {
+    log.push({
+      round,
+      turn,
+      actorName: combatant.name,
+      actionType: 'conditionSave',
+      condition: result.type,
+      saveRoll: result.roll,
+      saveTotal: result.total,
+      saveDC: result.dc,
+      saveAbility: result.ability,
+      savePassed: result.saved
+    })
+  })
+
+  // Then tick remaining conditions (decrement duration)
+  const expired = tickConditions(combatant)
+  expired.forEach(conditionType => {
+    log.push({
+      round,
+      turn,
+      actionType: 'conditionExpired',
+      condition: conditionType,
+      targetName: combatant.name
+    })
+  })
+}
+
+/**
  * Run a single combat simulation
  * @param {Array} party - Array of player combatants
  * @param {Array} monsters - Array of monster combatants
@@ -381,17 +420,8 @@ export function runCombat(party, monsters, simulationId) {
           conditions: combatant.conditions.map(c => c.type)
         })
 
-        // Still tick conditions at end of turn
-        const expired = tickConditions(combatant)
-        expired.forEach(conditionType => {
-          log.push({
-            round,
-            turn: turnInRound,
-            actionType: 'conditionExpired',
-            condition: conditionType,
-            targetName: combatant.name
-          })
-        })
+        // Process end-of-turn saves and tick conditions
+        processEndOfTurn(combatant, round, turnInRound, log)
 
         continue
       }
@@ -406,17 +436,8 @@ export function runCombat(party, monsters, simulationId) {
           const logEntry = executeHeal(combatant, healTarget, round, turnInRound)
           log.push(logEntry)
 
-          // Tick conditions at end of turn
-          const expired = tickConditions(combatant)
-          expired.forEach(conditionType => {
-            log.push({
-              round,
-              turn: turnInRound,
-              actionType: 'conditionExpired',
-              condition: conditionType,
-              targetName: combatant.name
-            })
-          })
+          // Process end-of-turn saves and tick conditions
+          processEndOfTurn(combatant, round, turnInRound, log)
 
           continue
         }
@@ -454,17 +475,8 @@ export function runCombat(party, monsters, simulationId) {
         }
       }
 
-      // Tick conditions at end of turn
-      const expired = tickConditions(combatant)
-      expired.forEach(conditionType => {
-        log.push({
-          round,
-          turn: turnInRound,
-          actionType: 'conditionExpired',
-          condition: conditionType,
-          targetName: combatant.name
-        })
-      })
+      // Process end-of-turn saves and tick conditions
+      processEndOfTurn(combatant, round, turnInRound, log)
     }
 
     round++
