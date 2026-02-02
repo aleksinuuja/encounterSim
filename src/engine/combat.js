@@ -188,9 +188,16 @@ function executeAttack(attacker, target, round, turn) {
     logEntry.targetHpAfter = target.currentHp
     logEntry.targetDowned = target.currentHp <= 0
 
-    // If target drops to 0 HP, mark them as unconscious
+    // If target drops to 0 HP
     if (target.currentHp <= 0) {
-      target.isUnconscious = true
+      if (target.isPlayer) {
+        // Players go unconscious and can make death saves
+        target.isUnconscious = true
+      } else {
+        // Monsters die immediately at 0 HP
+        target.isDead = true
+        logEntry.targetDied = true
+      }
     }
   }
 

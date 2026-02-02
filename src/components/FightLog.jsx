@@ -63,9 +63,11 @@ function FightLog({ results }) {
       <div className="fight-list">
         {results.map((result) => (
           <div key={result.id} className="fight-item">
-            <button
+            <div
               className={`fight-header ${result.partyWon ? 'party-won' : 'party-lost'}`}
               onClick={() => toggleExpand(result.id)}
+              role="button"
+              tabIndex={0}
             >
               <span className="fight-id">#{result.id}</span>
               <span className={`fight-outcome ${result.partyWon ? 'win' : 'loss'}`}>
@@ -79,7 +81,7 @@ function FightLog({ results }) {
                 }
               </span>
               <span className="expand-icon">{expandedId === result.id ? '▼' : '▶'}</span>
-            </button>
+            </div>
 
             {expandedId === result.id && (
               <div className="fight-details">

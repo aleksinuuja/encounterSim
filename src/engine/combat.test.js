@@ -109,10 +109,11 @@ describe('Death Save Mechanics', () => {
 })
 
 describe('Yo-Yo Healing Mechanics', () => {
+  // Use a tougher fight where players are likely to go down but party can still win
   const party = [createFighter(), createCleric()]
-  const monsters = [createOgre()]
+  const monsters = [createOgre(), { ...createGoblin(), id: 'goblin-1', name: 'Goblin 1' }, { ...createGoblin(), id: 'goblin-2', name: 'Goblin 2' }]
 
-  const { results } = runSimulations(party, monsters, 100)
+  const { results } = runSimulations(party, monsters, 200)
 
   let healCount = 0
   let reviveCount = 0

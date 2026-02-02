@@ -99,7 +99,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>v0.1 - Basic combat simulation</p>
+        <p>v0.3 - Death saves and yo-yo healing</p>
       </footer>
     </div>
   )
