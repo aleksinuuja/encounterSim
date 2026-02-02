@@ -769,6 +769,30 @@
   cursor: help;
 }
 
+.immunity-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 3px;
+  cursor: help;
+}
+
+.attack-type-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: #f3e5f5;
+  color: #7b1fa2;
+  border-radius: 3px;
+  cursor: help;
+}
+
 /* Condition Save Styles */
 .log-table tr.log-condition-save-passed {
   background: #e8f5e9;
@@ -802,4 +826,14 @@
 .condition-remains {
   color: #888;
   font-style: italic;
+}
+
+.condition-immune {
+  color: #1565c0;
+  font-style: italic;
+}
+
+.auto-crit {
+  color: #ff6f00;
+  font-weight: bold;
 }

@@ -20,7 +20,8 @@ export const CONDITIONS = {
     attackModifier: null, // Can't attack
     defendModifier: () => 'advantage',
     canAct: false,
-    description: "Can't take actions. Attacks against have advantage."
+    autoCrit: true, // Attacks within 5ft are auto-crits
+    description: "Can't take actions. Attacks against have advantage, auto-crit in melee."
   },
   poisoned: {
     name: 'Poisoned',
@@ -42,7 +43,48 @@ export const CONDITIONS = {
     defendModifier: () => 'advantage',
     canAct: true,
     description: 'Disadvantage on attacks. Attacks against have advantage.'
+  },
+  paralyzed: {
+    name: 'Paralyzed',
+    attackModifier: null, // Can't attack
+    defendModifier: () => 'advantage',
+    canAct: false,
+    autoCrit: true, // Attacks within 5ft are auto-crits
+    description: "Can't move or act. Attacks have advantage, auto-crit in melee."
+  },
+  frightened: {
+    name: 'Frightened',
+    attackModifier: 'disadvantage', // While source is visible
+    defendModifier: () => 'normal',
+    canAct: true,
+    description: 'Disadvantage on attacks while source of fear is visible.'
+  },
+  charmed: {
+    name: 'Charmed',
+    attackModifier: null, // Can't attack the charmer (handled specially)
+    defendModifier: () => 'normal',
+    canAct: true,
+    cantAttackSource: true, // Special: can't attack whoever charmed them
+    description: "Can't attack the charmer."
+  },
+  incapacitated: {
+    name: 'Incapacitated',
+    attackModifier: null,
+    defendModifier: () => 'normal',
+    canAct: false,
+    description: "Can't take actions or reactions."
   }
+}
+
+/**
+ * Check if a combatant is immune to a condition
+ * @param {object} combatant - The combatant to check
+ * @param {string} conditionType - The condition type
+ * @returns {boolean}
+ */
+export function isImmuneToCondition(combatant, conditionType) {
+  if (!combatant.conditionImmunities) return false
+  return combatant.conditionImmunities.includes(conditionType)
 }
 
 /**
@@ -75,9 +117,14 @@ export function getCondition(combatant, conditionType) {
  * @param {number|null} condition.duration - Rounds remaining (null = until cured)
  * @param {string} condition.source - Who applied the condition
  * @param {object} [condition.saveEndOfTurn] - Optional save to end early
- * @returns {boolean} - Whether condition was applied (false if already has it)
+ * @returns {'applied'|'immune'|'refreshed'} - Result of application attempt
  */
 export function applyCondition(combatant, condition) {
+  // Check immunity first
+  if (isImmuneToCondition(combatant, condition.type)) {
+    return 'immune'
+  }
+
   if (!combatant.conditions) {
     combatant.conditions = []
   }
@@ -92,7 +139,7 @@ export function applyCondition(combatant, condition) {
       existing.source = condition.source
       existing.saveEndOfTurn = condition.saveEndOfTurn
     }
-    return false
+    return 'refreshed'
   }
 
   combatant.conditions.push({
@@ -102,7 +149,7 @@ export function applyCondition(combatant, condition) {
     saveEndOfTurn: condition.saveEndOfTurn || null
   })
 
-  return true
+  return 'applied'
 }
 
 /**

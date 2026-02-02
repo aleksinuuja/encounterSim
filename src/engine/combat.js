@@ -10,7 +10,8 @@ import {
   tickConditions,
   processEndOfTurnSaves,
   applyCondition,
-  hasCondition
+  hasCondition,
+  CONDITIONS
 } from './conditions.js'
 
 /**
@@ -196,13 +197,22 @@ function executeAttack(attacker, target, round, turn, combatants, conditionLog) 
     return logEntry
   }
 
-  // Natural 20 always hits and crits
-  const isCritical = attackRoll === 20
+  // Check for auto-crit conditions (paralyzed, stunned) on melee attacks
+  const hasAutoCritCondition = target.conditions?.some(c => {
+    const def = CONDITIONS[c.type]
+    return def?.autoCrit && attackType === 'melee'
+  })
+
+  // Natural 20 always hits and crits, also auto-crit against paralyzed/stunned
+  const isCritical = attackRoll === 20 || hasAutoCritCondition
   const hit = isCritical || totalAttack >= target.armorClass
 
   if (hit) {
     logEntry.hit = true
     logEntry.targetHpBefore = target.currentHp
+    if (hasAutoCritCondition) {
+      logEntry.autoCrit = true
+    }
 
     const damage = rollDamage(attacker.damage, isCritical)
     logEntry.damageRoll = damage
@@ -226,14 +236,14 @@ function executeAttack(attacker, target, round, turn, combatants, conditionLog) 
       }
 
       if (!savePassed) {
-        const applied = applyCondition(target, {
+        const result = applyCondition(target, {
           type: effect.condition,
           duration: effect.duration,
           source: attacker.name,
           saveEndOfTurn: effect.saveEndOfTurn || null
         })
 
-        if (applied) {
+        if (result === 'applied') {
           conditionLog.push({
             round,
             turn,
@@ -244,6 +254,8 @@ function executeAttack(attacker, target, round, turn, combatants, conditionLog) 
             duration: effect.duration
           })
           logEntry.conditionApplied = effect.condition
+        } else if (result === 'immune') {
+          logEntry.conditionImmune = effect.condition
         }
       }
     }

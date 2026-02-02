@@ -99,7 +99,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>v0.4 - Conditions and advantage/disadvantage</p>
+        <p>v0.5 - More conditions, immunities, and attack types</p>
       </footer>
     </div>
   )

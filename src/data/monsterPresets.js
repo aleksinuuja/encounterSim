@@ -61,7 +61,8 @@ export const monsterPresets = [
     initiativeBonus: 2,
     numAttacks: 1,
     healingDice: null,
-    description: 'Undead warrior'
+    conditionImmunities: ['poisoned', 'frightened', 'charmed'],
+    description: 'Undead - immune to poison/fear/charm'
   },
   {
     key: 'wolf',
@@ -91,7 +92,8 @@ export const monsterPresets = [
     initiativeBonus: -2,
     numAttacks: 1,
     healingDice: null,
-    description: 'Slow but tough'
+    conditionImmunities: ['poisoned', 'frightened', 'charmed'],
+    description: 'Undead - immune to poison/fear/charm'
   },
   {
     key: 'bandit',
@@ -116,5 +118,54 @@ export const monsterPresets = [
     numAttacks: 1,
     healingDice: null,
     description: 'Big and brutal'
+  },
+  {
+    key: 'goblin-archer',
+    name: 'Goblin Archer',
+    maxHp: 7,
+    armorClass: 13,
+    attackBonus: 4,
+    damage: '1d6+2',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    attackType: 'ranged',
+    description: 'Shortbow (ranged)'
+  },
+  {
+    key: 'ghoul',
+    name: 'Ghoul',
+    maxHp: 22,
+    armorClass: 12,
+    attackBonus: 4,
+    damage: '2d6+2',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    conditionImmunities: ['poisoned', 'charmed'],
+    onHitEffect: {
+      condition: 'paralyzed',
+      duration: 2,
+      saveDC: 10,
+      saveAbility: 'constitution',
+      saveEndOfTurn: {
+        ability: 'constitution',
+        dc: 10
+      }
+    },
+    description: 'Paralyzing claws (DC 10 CON)'
+  },
+  {
+    key: 'specter',
+    name: 'Specter',
+    maxHp: 22,
+    armorClass: 12,
+    attackBonus: 4,
+    damage: '3d6',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    conditionImmunities: ['poisoned', 'frightened', 'charmed', 'prone'],
+    description: 'Incorporeal undead'
   }
 ]

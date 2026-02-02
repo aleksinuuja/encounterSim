@@ -218,6 +218,12 @@ function FightLog({ results }) {
                                   {entry.conditionApplied && (
                                     <span className="condition-applied"> +{entry.conditionApplied.toUpperCase()}</span>
                                   )}
+                                  {entry.conditionImmune && (
+                                    <span className="condition-immune"> (immune to {entry.conditionImmune})</span>
+                                  )}
+                                  {entry.autoCrit && (
+                                    <span className="auto-crit"> AUTO-CRIT</span>
+                                  )}
                                   {entry.targetDowned && <span className="downed"> DOWNED</span>}
                                   {entry.targetDied && <span className="died"> DIED</span>}
                                 </>
