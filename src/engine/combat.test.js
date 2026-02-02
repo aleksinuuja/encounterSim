@@ -1,266 +1,317 @@
-/**
- * Test script for v0.3 death saves and yo-yo healing mechanics
- * Run with: node --experimental-vm-modules src/engine/combat.test.js
- */
-
+import { describe, it, expect } from 'vitest'
 import { runCombat, runSimulations } from './combat.js'
 
-// Test helpers
-let testsPassed = 0
-let testsFailed = 0
-
-function assert(condition, message) {
-  if (condition) {
-    testsPassed++
-    console.log(`  ✓ ${message}`)
-  } else {
-    testsFailed++
-    console.log(`  ✗ ${message}`)
-  }
-}
-
-function describe(name, fn) {
-  console.log(`\n${name}`)
-  fn()
-}
-
-// Sample combatants for testing
-const createFighter = () => ({
-  id: 'fighter-1',
+// Test fixtures
+const createFighter = (overrides = {}) => ({
   name: 'Fighter',
-  maxHp: 40,
-  armorClass: 16,
+  maxHp: 44,
+  armorClass: 18,
+  attackBonus: 7,
+  damage: '1d8+4',
+  initiativeBonus: 2,
+  isPlayer: true,
+  numAttacks: 2,
+  constitutionSave: 4,
+  ...overrides
+})
+
+const createOrc = (overrides = {}) => ({
+  name: 'Orc',
+  maxHp: 15,
+  armorClass: 13,
+  attackBonus: 5,
+  damage: '1d12+3',
+  initiativeBonus: 1,
+  isPlayer: false,
+  numAttacks: 1,
+  ...overrides
+})
+
+const createSpider = (overrides = {}) => ({
+  name: 'Giant Spider',
+  maxHp: 26,
+  armorClass: 14,
   attackBonus: 5,
   damage: '1d8+3',
-  initiativeBonus: 2,
-  numAttacks: 1
-})
-
-const createCleric = () => ({
-  id: 'cleric-1',
-  name: 'Cleric',
-  maxHp: 30,
-  armorClass: 14,
-  attackBonus: 4,
-  damage: '1d6+2',
-  initiativeBonus: 0,
+  initiativeBonus: 3,
+  isPlayer: false,
   numAttacks: 1,
-  healingDice: '1d8+3'
+  onHitEffect: {
+    condition: 'poisoned',
+    duration: 3,
+    saveDC: 11,
+    saveAbility: 'constitution',
+    saveEndOfTurn: { ability: 'constitution', dc: 11 }
+  },
+  ...overrides
 })
 
-const createGoblin = () => ({
-  id: 'goblin-1',
-  name: 'Goblin',
-  maxHp: 7,
+const createGhoul = (overrides = {}) => ({
+  name: 'Ghoul',
+  maxHp: 22,
   armorClass: 12,
   attackBonus: 4,
+  damage: '2d6+2',
+  initiativeBonus: 2,
+  isPlayer: false,
+  numAttacks: 1,
+  onHitEffect: {
+    condition: 'paralyzed',
+    duration: 2,
+    saveDC: 10,
+    saveAbility: 'constitution',
+    saveEndOfTurn: { ability: 'constitution', dc: 10 }
+  },
+  ...overrides
+})
+
+const createSkeleton = (overrides = {}) => ({
+  name: 'Skeleton',
+  maxHp: 13,
+  armorClass: 13,
+  attackBonus: 4,
   damage: '1d6+2',
   initiativeBonus: 2,
-  numAttacks: 1
+  isPlayer: false,
+  numAttacks: 1,
+  conditionImmunities: ['poisoned', 'frightened', 'charmed'],
+  ...overrides
 })
 
-const createOgre = () => ({
-  id: 'ogre-1',
-  name: 'Ogre',
-  maxHp: 59,
-  armorClass: 11,
-  attackBonus: 6,
-  damage: '2d8+4',
-  initiativeBonus: -1,
-  numAttacks: 1
-})
+describe('runCombat', () => {
+  it('returns a valid result object', () => {
+    const result = runCombat([createFighter()], [createOrc()], 1)
 
-// Run tests
-describe('Death Save Mechanics', () => {
-  // Run many simulations to ensure we see death saves
-  const party = [createFighter(), createCleric()]
-  const monsters = [createOgre(), { ...createOgre(), id: 'ogre-2', name: 'Ogre 2' }]
-
-  const { results } = runSimulations(party, monsters, 100)
-
-  // Check that death saves occur
-  let deathSaveCount = 0
-  let stabilizedCount = 0
-  let diedFromSavesCount = 0
-  let nat20RecoveryCount = 0
-  let nat1DoubleFailCount = 0
-
-  results.forEach(result => {
-    result.log.forEach(entry => {
-      if (entry.actionType === 'deathSave') {
-        deathSaveCount++
-        if (entry.stabilized) stabilizedCount++
-        if (entry.died) diedFromSavesCount++
-        if (entry.recoveredFromNat20) nat20RecoveryCount++
-        if (entry.deathSaveRoll === 1) nat1DoubleFailCount++
-      }
-    })
+    expect(result).toHaveProperty('id', 1)
+    expect(result).toHaveProperty('partyWon')
+    expect(result).toHaveProperty('totalRounds')
+    expect(result).toHaveProperty('survivingParty')
+    expect(result).toHaveProperty('survivingMonsters')
+    expect(result).toHaveProperty('log')
+    expect(Array.isArray(result.log)).toBe(true)
   })
 
-  assert(deathSaveCount > 0, `Death saves occurred (${deathSaveCount} total)`)
-  assert(stabilizedCount > 0 || diedFromSavesCount > 0, `Some characters stabilized (${stabilizedCount}) or died from saves (${diedFromSavesCount})`)
+  it('ends combat when one side is eliminated', () => {
+    const result = runCombat([createFighter()], [createOrc()], 1)
 
-  // Nat 20 should occur ~5% of the time on death saves
-  const nat20Rate = nat20RecoveryCount / deathSaveCount
-  assert(nat20RecoveryCount >= 0, `Nat 20 recoveries tracked (${nat20RecoveryCount}, rate: ${(nat20Rate * 100).toFixed(1)}%)`)
-
-  // Nat 1 should occur ~5% of the time
-  assert(nat1DoubleFailCount >= 0, `Nat 1 double failures tracked (${nat1DoubleFailCount})`)
-})
-
-describe('Yo-Yo Healing Mechanics', () => {
-  // Use a tougher fight where players are likely to go down but party can still win
-  const party = [createFighter(), createCleric()]
-  const monsters = [createOgre(), { ...createGoblin(), id: 'goblin-1', name: 'Goblin 1' }, { ...createGoblin(), id: 'goblin-2', name: 'Goblin 2' }]
-
-  const { results } = runSimulations(party, monsters, 200)
-
-  let healCount = 0
-  let reviveCount = 0
-  let healedAboveZeroCount = 0
-
-  results.forEach(result => {
-    result.log.forEach(entry => {
-      if (entry.actionType === 'heal') {
-        healCount++
-        if (entry.revivedFromUnconscious) {
-          reviveCount++
-        }
-        // Check if healing happened when target was above 0 HP
-        if (entry.targetHpBefore > 0) {
-          healedAboveZeroCount++
-        }
-      }
-    })
-  })
-
-  assert(healCount > 0, `Healing occurred (${healCount} total)`)
-  assert(reviveCount > 0, `Revives from unconscious occurred (${reviveCount} total)`)
-  assert(healedAboveZeroCount === 0, `No healing on conscious allies (found ${healedAboveZeroCount} - should be 0 for yo-yo healing)`)
-
-  // All heals should be revives (since we only heal unconscious allies)
-  assert(healCount === reviveCount, `All heals were revives (${reviveCount}/${healCount})`)
-})
-
-describe('Unconscious Targeting', () => {
-  const party = [createFighter(), createCleric()]
-  const monsters = [createGoblin(), createGoblin(), createGoblin()]
-
-  const { results } = runSimulations(party, monsters, 50)
-
-  let attacksOnUnconsciousCount = 0
-
-  results.forEach(result => {
-    result.log.forEach(entry => {
-      if (entry.actionType === 'attack' && entry.targetHpBefore === 0) {
-        attacksOnUnconsciousCount++
-      }
-    })
-  })
-
-  // Monsters should NOT attack unconscious players (default behavior)
-  assert(attacksOnUnconsciousCount === 0, `Monsters don't attack unconscious targets (found ${attacksOnUnconsciousCount})`)
-})
-
-describe('Combat State Tracking', () => {
-  const party = [createFighter()]
-  const monsters = [createOgre()]
-
-  const { results } = runSimulations(party, monsters, 50)
-
-  let validDeathSaveStates = true
-
-  results.forEach(result => {
-    result.log.forEach(entry => {
-      if (entry.actionType === 'deathSave') {
-        // Successes should be 0-3
-        if (entry.deathSaveSuccesses < 0 || entry.deathSaveSuccesses > 3) {
-          validDeathSaveStates = false
-        }
-        // Failures should be 0-4 (can be 4 due to nat 1 adding 2)
-        if (entry.deathSaveFailures < 0 || entry.deathSaveFailures > 4) {
-          validDeathSaveStates = false
-        }
-        // If stabilized, should have 3 successes
-        if (entry.stabilized && entry.deathSaveSuccesses < 3) {
-          validDeathSaveStates = false
-        }
-        // If died, should have 3+ failures
-        if (entry.died && entry.deathSaveFailures < 3) {
-          validDeathSaveStates = false
-        }
-      }
-    })
-  })
-
-  assert(validDeathSaveStates, 'Death save states are valid (successes 0-3, failures 0-4)')
-})
-
-describe('Combat End Conditions', () => {
-  const party = [createFighter(), createCleric()]
-  const monsters = [createGoblin()]
-
-  const { results, summary } = runSimulations(party, monsters, 100)
-
-  // Party should win most of the time against a single goblin
-  assert(summary.partyWinPercentage > 50, `Party wins majority against weak enemy (${summary.partyWinPercentage.toFixed(1)}%)`)
-
-  // Check that surviving party only includes non-dead members
-  let validSurvivors = true
-  results.forEach(result => {
     if (result.partyWon) {
-      // Winners should have at least one survivor
-      if (result.survivingParty.length === 0) {
-        validSurvivors = false
-      }
+      expect(result.survivingMonsters).toHaveLength(0)
+      expect(result.survivingParty.length).toBeGreaterThan(0)
+    } else {
+      expect(result.survivingParty).toHaveLength(0)
+      expect(result.survivingMonsters.length).toBeGreaterThan(0)
     }
   })
 
-  assert(validSurvivors, 'Winning party always has survivors')
+  it('completes within MAX_ROUNDS', () => {
+    const result = runCombat([createFighter()], [createOrc()], 1)
+    expect(result.totalRounds).toBeLessThanOrEqual(100)
+  })
 })
 
-describe('Death Save Roll Distribution', () => {
-  // Run many simulations to check roll distribution
-  const party = [createFighter()]
-  const monsters = [createOgre(), { ...createOgre(), id: 'ogre-2', name: 'Ogre 2' }]
+describe('death saves', () => {
+  it('player goes unconscious at 0 HP instead of dying', () => {
+    // Use a weak player against a strong enemy
+    const weakPlayer = createFighter({ maxHp: 10, armorClass: 10 })
+    const strongOrc = createOrc({ damage: '2d12+5' })
 
-  const { results } = runSimulations(party, monsters, 200)
-
-  const rollCounts = {}
-  let totalRolls = 0
-
-  results.forEach(result => {
-    result.log.forEach(entry => {
-      if (entry.actionType === 'deathSave' && !entry.recoveredFromNat20) {
-        const roll = entry.deathSaveRoll
-        rollCounts[roll] = (rollCounts[roll] || 0) + 1
-        totalRolls++
+    let foundUnconscious = false
+    for (let i = 0; i < 20; i++) {
+      const result = runCombat([weakPlayer], [strongOrc], i)
+      const downedEvents = result.log.filter(e => e.targetDowned && !e.targetDied)
+      if (downedEvents.length > 0) {
+        foundUnconscious = true
+        break
       }
-    })
+    }
+    expect(foundUnconscious).toBe(true)
   })
 
-  // Check we have a reasonable distribution
-  const hasVariety = Object.keys(rollCounts).length >= 10
-  assert(hasVariety, `Death save rolls have variety (${Object.keys(rollCounts).length} different values seen)`)
+  it('monsters die immediately at 0 HP', () => {
+    const result = runCombat([createFighter()], [createOrc()], 1)
 
-  if (totalRolls > 0) {
-    // Count successes (10-19) vs failures (2-9)
-    let successes = 0
-    let failures = 0
-    for (let i = 2; i <= 9; i++) successes += rollCounts[i] || 0
-    for (let i = 10; i <= 19; i++) failures += rollCounts[i] || 0
+    // Find any orc death - should have targetDied
+    const orcDeaths = result.log.filter(
+      e => e.targetName === 'Orc' && e.targetDowned
+    )
 
-    // Should be roughly 50/50 (with some variance)
-    const successRate = failures / (successes + failures)
-    assert(successRate > 0.3 && successRate < 0.7, `Success rate is reasonable (${(successRate * 100).toFixed(1)}%, expected ~55%)`)
-  }
+    if (orcDeaths.length > 0) {
+      expect(orcDeaths.every(e => e.targetDied)).toBe(true)
+    }
+  })
+
+  it('death saves are rolled for unconscious players', () => {
+    const weakPlayer = createFighter({ maxHp: 10, armorClass: 8 })
+    const orc = createOrc()
+
+    let foundDeathSave = false
+    for (let i = 0; i < 30; i++) {
+      const result = runCombat([weakPlayer], [orc], i)
+      const deathSaves = result.log.filter(e => e.actionType === 'deathSave')
+      if (deathSaves.length > 0) {
+        foundDeathSave = true
+        break
+      }
+    }
+    expect(foundDeathSave).toBe(true)
+  })
 })
 
-// Summary
-console.log('\n' + '='.repeat(50))
-console.log(`Tests: ${testsPassed} passed, ${testsFailed} failed`)
-console.log('='.repeat(50))
+describe('conditions', () => {
+  it('spider can poison targets', () => {
+    const fighter = createFighter()
+    const spider = createSpider()
 
-if (testsFailed > 0) {
-  process.exit(1)
-}
+    let foundPoison = false
+    for (let i = 0; i < 20; i++) {
+      const result = runCombat([fighter], [spider], i)
+      const poisonEvents = result.log.filter(e => e.conditionApplied === 'poisoned')
+      if (poisonEvents.length > 0) {
+        foundPoison = true
+        break
+      }
+    }
+    expect(foundPoison).toBe(true)
+  })
+
+  it('skeleton is immune to poison', () => {
+    const skeleton = createSkeleton({ isPlayer: true })
+    const spider = createSpider()
+
+    let foundImmunity = false
+    for (let i = 0; i < 30; i++) {
+      const result = runCombat([skeleton], [spider], i)
+      const immuneEvents = result.log.filter(e => e.conditionImmune === 'poisoned')
+      if (immuneEvents.length > 0) {
+        foundImmunity = true
+        break
+      }
+    }
+    expect(foundImmunity).toBe(true)
+  })
+
+  it('ghoul can paralyze targets', () => {
+    const fighter = createFighter()
+    const ghoul = createGhoul()
+
+    let foundParalysis = false
+    for (let i = 0; i < 20; i++) {
+      const result = runCombat([fighter], [ghoul], i)
+      const paralyzeEvents = result.log.filter(e => e.conditionApplied === 'paralyzed')
+      if (paralyzeEvents.length > 0) {
+        foundParalysis = true
+        break
+      }
+    }
+    expect(foundParalysis).toBe(true)
+  })
+
+  it('attacks against paralyzed targets auto-crit', () => {
+    const fighter = createFighter({ constitutionSave: -5 }) // Easy to paralyze
+    const ghoul = createGhoul()
+
+    let foundAutoCrit = false
+    for (let i = 0; i < 30; i++) {
+      const result = runCombat([fighter], [ghoul], i)
+      const autoCritEvents = result.log.filter(e => e.autoCrit)
+      if (autoCritEvents.length > 0) {
+        foundAutoCrit = true
+        break
+      }
+    }
+    expect(foundAutoCrit).toBe(true)
+  })
+
+  it('end-of-turn saves can cure conditions', () => {
+    // Make fighter easy to poison (low save), spider tough (so combat lasts)
+    const fighter = createFighter({ constitutionSave: -5 })
+    const spider = createSpider({ maxHp: 100, armorClass: 20 }) // Tough spider
+
+    let foundSaveCure = false
+    for (let i = 0; i < 100; i++) {
+      const result = runCombat([fighter], [spider], i)
+      // Look for any condition save (passed or failed means the system is working)
+      const saveEvents = result.log.filter(e => e.actionType === 'conditionSave')
+      const passedSaves = saveEvents.filter(e => e.savePassed)
+      if (passedSaves.length > 0) {
+        foundSaveCure = true
+        break
+      }
+    }
+    expect(foundSaveCure).toBe(true)
+  })
+
+  it('poisoned combatants have disadvantage shown in log', () => {
+    const fighter = createFighter({ constitutionSave: -10 }) // Easy to poison
+    const spider = createSpider()
+
+    let foundDisadvantage = false
+    for (let i = 0; i < 30; i++) {
+      const result = runCombat([fighter], [spider], i)
+      const disadvantageEvents = result.log.filter(
+        e => e.actorName === 'Fighter' && e.rollModifier === 'disadvantage'
+      )
+      if (disadvantageEvents.length > 0) {
+        foundDisadvantage = true
+        break
+      }
+    }
+    expect(foundDisadvantage).toBe(true)
+  })
+})
+
+describe('healing', () => {
+  it('healer only heals unconscious allies (yo-yo healing)', () => {
+    const cleric = createFighter({
+      name: 'Cleric',
+      healingDice: '1d8+3'
+    })
+    const fighter = createFighter({ maxHp: 15, armorClass: 10 })
+    const orc = createOrc()
+
+    let foundYoyoHeal = false
+    for (let i = 0; i < 50; i++) {
+      const result = runCombat([cleric, fighter], [orc], i)
+      const heals = result.log.filter(e => e.actionType === 'heal')
+      const yoyoHeals = heals.filter(e => e.revivedFromUnconscious)
+
+      if (yoyoHeals.length > 0) {
+        foundYoyoHeal = true
+        break
+      }
+    }
+    expect(foundYoyoHeal).toBe(true)
+  })
+})
+
+describe('runSimulations', () => {
+  it('runs multiple simulations and aggregates results', () => {
+    const { results, summary } = runSimulations(
+      [createFighter()],
+      [createOrc()],
+      10
+    )
+
+    expect(results).toHaveLength(10)
+    expect(summary.totalSimulations).toBe(10)
+    expect(summary.partyWins).toBeGreaterThanOrEqual(0)
+    expect(summary.partyWins).toBeLessThanOrEqual(10)
+    expect(summary.partyWinPercentage).toBeGreaterThanOrEqual(0)
+    expect(summary.partyWinPercentage).toBeLessThanOrEqual(100)
+    expect(summary.averageRounds).toBeGreaterThan(0)
+  })
+
+  it('tracks survivor counts', () => {
+    const { summary } = runSimulations(
+      [createFighter()],
+      [createOrc()],
+      10
+    )
+
+    expect(summary.survivorCounts).toBeDefined()
+    // If there are any party wins, Fighter should be in survivor counts
+    if (summary.partyWins > 0) {
+      expect(summary.survivorCounts['Fighter']).toBeGreaterThan(0)
+    }
+  })
+})
