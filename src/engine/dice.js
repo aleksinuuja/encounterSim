@@ -73,3 +73,47 @@ export function rollDamage(notation, isCritical = false) {
 export function rollD20() {
   return rollDie(20)
 }
+
+/**
+ * Roll 1d20 with advantage (roll twice, take higher)
+ * @returns {{ result: number, rolls: [number, number] }}
+ */
+export function rollD20WithAdvantage() {
+  const roll1 = rollDie(20)
+  const roll2 = rollDie(20)
+  return {
+    result: Math.max(roll1, roll2),
+    rolls: [roll1, roll2]
+  }
+}
+
+/**
+ * Roll 1d20 with disadvantage (roll twice, take lower)
+ * @returns {{ result: number, rolls: [number, number] }}
+ */
+export function rollD20WithDisadvantage() {
+  const roll1 = rollDie(20)
+  const roll2 = rollDie(20)
+  return {
+    result: Math.min(roll1, roll2),
+    rolls: [roll1, roll2]
+  }
+}
+
+/**
+ * Roll 1d20 with optional advantage/disadvantage
+ * @param {'advantage' | 'disadvantage' | 'normal'} modifier
+ * @returns {{ result: number, rolls: number[], modifier: string }}
+ */
+export function rollD20WithModifier(modifier = 'normal') {
+  if (modifier === 'advantage') {
+    const { result, rolls } = rollD20WithAdvantage()
+    return { result, rolls, modifier: 'advantage' }
+  }
+  if (modifier === 'disadvantage') {
+    const { result, rolls } = rollD20WithDisadvantage()
+    return { result, rolls, modifier: 'disadvantage' }
+  }
+  const result = rollD20()
+  return { result, rolls: [result], modifier: 'normal' }
+}

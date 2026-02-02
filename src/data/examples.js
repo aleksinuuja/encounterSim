@@ -67,6 +67,25 @@ export const exampleParty = [
 
 export const exampleMonsters = [
   {
+    id: 'spider-1',
+    name: 'Giant Spider',
+    maxHp: 26,
+    armorClass: 14,
+    attackBonus: 5,
+    damage: '1d8+3',
+    initiativeBonus: 3,
+    isPlayer: false,
+    numAttacks: 1,
+    healingDice: null,
+    // Poison bite: on hit, target must save or be poisoned
+    onHitEffect: {
+      condition: 'poisoned',
+      duration: 3,
+      saveDC: 11,
+      saveAbility: 'constitution'
+    }
+  },
+  {
     id: 'orc-1',
     name: 'Orc 1',
     maxHp: 15,
@@ -93,18 +112,6 @@ export const exampleMonsters = [
   {
     id: 'orc-3',
     name: 'Orc 3',
-    maxHp: 15,
-    armorClass: 13,
-    attackBonus: 5,
-    damage: '1d12+3',
-    initiativeBonus: 1,
-    isPlayer: false,
-    numAttacks: 1,
-    healingDice: null
-  },
-  {
-    id: 'orc-4',
-    name: 'Orc 4',
     maxHp: 15,
     armorClass: 13,
     attackBonus: 5,

@@ -51,10 +51,23 @@ function FightLog({ results }) {
     if (entry.actionType === 'heal') {
       return entry.revivedFromUnconscious ? 'log-revive' : 'log-heal'
     }
+    if (entry.actionType === 'conditionApplied') return 'log-condition-applied'
+    if (entry.actionType === 'conditionExpired') return 'log-condition-expired'
+    if (entry.actionType === 'incapacitated') return 'log-incapacitated'
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
     if (entry.hit) return 'log-hit'
     return 'log-miss'
+  }
+
+  const renderRollModifier = (entry) => {
+    if (entry.rollModifier === 'advantage') {
+      return <span className="roll-advantage" title={`Rolls: ${entry.attackRolls.join(', ')}`}> ADV</span>
+    }
+    if (entry.rollModifier === 'disadvantage') {
+      return <span className="roll-disadvantage" title={`Rolls: ${entry.attackRolls.join(', ')}`}> DIS</span>
+    }
+    return null
   }
 
   return (
@@ -131,10 +144,41 @@ function FightLog({ results }) {
                               {entry.revivedFromUnconscious && <span className="revived"> (back up!)</span>}
                             </td>
                           </>
+                        ) : entry.actionType === 'conditionApplied' ? (
+                          <>
+                            <td colSpan="2" className="condition-label">CONDITION</td>
+                            <td>
+                              <span className="condition-applied">
+                                {entry.condition.toUpperCase()}
+                              </span>
+                              {' applied by '}{entry.sourceName}
+                              {entry.duration && ` (${entry.duration} rounds)`}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'conditionExpired' ? (
+                          <>
+                            <td colSpan="2" className="condition-label">CONDITION</td>
+                            <td>
+                              <span className="condition-expired">
+                                {entry.condition.toUpperCase()}
+                              </span>
+                              {' expired'}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'incapacitated' ? (
+                          <>
+                            <td colSpan="2" className="incapacitated-label">INCAPACITATED</td>
+                            <td>
+                              <span className="incapacitated">
+                                Can't act ({entry.conditions.join(', ')})
+                              </span>
+                            </td>
+                          </>
                         ) : (
                           <>
                             <td>
                               {entry.attackRoll}
+                              {renderRollModifier(entry)}
                               {entry.attackRoll === 20 && ' (CRIT)'}
                               {entry.attackRoll === 1 && ' (FUMBLE)'}
                               {' → '}{entry.totalAttack}
@@ -149,6 +193,9 @@ function FightLog({ results }) {
                                   </span>
                                   {' '}
                                   ({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.conditionApplied && (
+                                    <span className="condition-applied"> +{entry.conditionApplied.toUpperCase()}</span>
+                                  )}
                                   {entry.targetDowned && <span className="downed"> DOWNED</span>}
                                   {entry.targetDied && <span className="died"> DIED</span>}
                                 </>

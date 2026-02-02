@@ -2,8 +2,15 @@
  * Main combat simulation engine
  */
 
-import { rollD20, rollDamage, rollDice } from './dice.js'
+import { rollD20, rollD20WithModifier, rollDamage, rollDice } from './dice.js'
 import { selectTarget, selectHealTarget } from './targeting.js'
+import {
+  canAct,
+  getCombinedModifier,
+  tickConditions,
+  applyCondition,
+  hasCondition
+} from './conditions.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -19,7 +26,8 @@ function rollInitiative(combatants) {
     isStabilized: false,
     isDead: false,
     deathSaveSuccesses: 0,
-    deathSaveFailures: 0
+    deathSaveFailures: 0,
+    conditions: [] // v0.4: Track active conditions
   }))
 
   // Sort by initiative (descending)
@@ -124,10 +132,17 @@ function rollDeathSave(combatant, round, turn) {
  * @param {object} target - The target combatant
  * @param {number} round - Current round number
  * @param {number} turn - Current turn number within the round
+ * @param {Array} combatants - All combatants for condition logging
+ * @param {Array} conditionLog - Array to push condition log entries
  * @returns {object} - Log entry for this attack
  */
-function executeAttack(attacker, target, round, turn) {
-  const attackRoll = rollD20()
+function executeAttack(attacker, target, round, turn, combatants, conditionLog) {
+  // Determine attack type (melee by default, could be extended later)
+  const attackType = attacker.attackType || 'melee'
+
+  // Get advantage/disadvantage from conditions
+  const rollModifier = getCombinedModifier(attacker, target, attackType)
+  const { result: attackRoll, rolls: attackRolls } = rollD20WithModifier(rollModifier)
   const totalAttack = attackRoll + attacker.attackBonus
 
   const logEntry = {
@@ -137,6 +152,8 @@ function executeAttack(attacker, target, round, turn) {
     targetName: target.name,
     actionType: 'attack',
     attackRoll,
+    attackRolls, // Array of all d20 rolls (for advantage/disadvantage display)
+    rollModifier, // 'advantage', 'disadvantage', or 'normal'
     totalAttack,
     targetAC: target.armorClass,
     hit: false
@@ -147,15 +164,15 @@ function executeAttack(attacker, target, round, turn) {
     logEntry.hit = true
     logEntry.targetHpBefore = target.currentHp
 
-    const isCritical = attackRoll === 20
+    // Attacks against unconscious targets are auto-crits if within 5 feet
+    const isCritical = attackType === 'melee' || attackRoll === 20
     const damage = rollDamage(attacker.damage, isCritical)
     logEntry.damageRoll = damage
     logEntry.isCritical = isCritical
     logEntry.targetHpAfter = 0
 
     // Damage at 0 HP causes death save failures (melee = 2, ranged = 1)
-    // Assuming melee for simplicity (most attacks are melee)
-    target.deathSaveFailures += 2
+    target.deathSaveFailures += attackType === 'melee' ? 2 : 1
     logEntry.deathSaveFailures = target.deathSaveFailures
 
     if (target.deathSaveFailures >= 3) {
@@ -166,8 +183,14 @@ function executeAttack(attacker, target, round, turn) {
     return logEntry
   }
 
-  // Natural 1 always misses
-  if (attackRoll === 1) {
+  // Natural 1 always misses (check raw roll, not modified)
+  const rawRoll = attackRolls[0] // First roll is what we check for nat 1
+  if (attackRolls.length === 1 && rawRoll === 1) {
+    logEntry.hit = false
+    return logEntry
+  }
+  // With advantage/disadvantage, only miss on nat 1 if BOTH rolls are 1
+  if (attackRolls.length === 2 && attackRolls[0] === 1 && attackRolls[1] === 1) {
     logEntry.hit = false
     return logEntry
   }
@@ -187,6 +210,42 @@ function executeAttack(attacker, target, round, turn) {
     target.currentHp = Math.max(0, target.currentHp - damage)
     logEntry.targetHpAfter = target.currentHp
     logEntry.targetDowned = target.currentHp <= 0
+
+    // Apply on-hit effects (e.g., poison from giant spider)
+    if (attacker.onHitEffect && conditionLog) {
+      const effect = attacker.onHitEffect
+      // Roll save if applicable
+      let savePassed = false
+      if (effect.saveDC && effect.saveAbility) {
+        const saveRoll = rollD20()
+        const saveBonus = target[effect.saveAbility + 'Save'] || 0
+        savePassed = (saveRoll + saveBonus) >= effect.saveDC
+        logEntry.conditionSaveRoll = saveRoll
+        logEntry.conditionSavePassed = savePassed
+      }
+
+      if (!savePassed) {
+        const applied = applyCondition(target, {
+          type: effect.condition,
+          duration: effect.duration,
+          source: attacker.name,
+          saveEndOfTurn: effect.saveEndOfTurn || null
+        })
+
+        if (applied) {
+          conditionLog.push({
+            round,
+            turn,
+            actionType: 'conditionApplied',
+            condition: effect.condition,
+            targetName: target.name,
+            sourceName: attacker.name,
+            duration: effect.duration
+          })
+          logEntry.conditionApplied = effect.condition
+        }
+      }
+    }
 
     // If target drops to 0 HP
     if (target.currentHp <= 0) {
@@ -311,6 +370,32 @@ export function runCombat(party, monsters, simulationId) {
         // If recovered from nat 20, continue to take normal turn
       }
 
+      // Check if conditions prevent acting (e.g., stunned)
+      if (!canAct(combatant)) {
+        // Log that the combatant couldn't act due to condition
+        log.push({
+          round,
+          turn: turnInRound,
+          actorName: combatant.name,
+          actionType: 'incapacitated',
+          conditions: combatant.conditions.map(c => c.type)
+        })
+
+        // Still tick conditions at end of turn
+        const expired = tickConditions(combatant)
+        expired.forEach(conditionType => {
+          log.push({
+            round,
+            turn: turnInRound,
+            actionType: 'conditionExpired',
+            condition: conditionType,
+            targetName: combatant.name
+          })
+        })
+
+        continue
+      }
+
       // Check if combatant should heal instead of attack
       // Yo-yo healing: only heal unconscious allies
       const healingDice = combatant.healingDice
@@ -320,6 +405,19 @@ export function runCombat(party, monsters, simulationId) {
           // Heal instead of attacking
           const logEntry = executeHeal(combatant, healTarget, round, turnInRound)
           log.push(logEntry)
+
+          // Tick conditions at end of turn
+          const expired = tickConditions(combatant)
+          expired.forEach(conditionType => {
+            log.push({
+              round,
+              turn: turnInRound,
+              actionType: 'conditionExpired',
+              condition: conditionType,
+              targetName: combatant.name
+            })
+          })
+
           continue
         }
       }
@@ -334,8 +432,8 @@ export function runCombat(party, monsters, simulationId) {
           break
         }
 
-        // Execute the attack
-        const logEntry = executeAttack(combatant, target, round, turnInRound)
+        // Execute the attack (pass combatants and log for condition effects)
+        const logEntry = executeAttack(combatant, target, round, turnInRound, combatants, log)
         log.push(logEntry)
 
         // Check if combat is over
@@ -355,6 +453,18 @@ export function runCombat(party, monsters, simulationId) {
           }
         }
       }
+
+      // Tick conditions at end of turn
+      const expired = tickConditions(combatant)
+      expired.forEach(conditionType => {
+        log.push({
+          round,
+          turn: turnInRound,
+          actionType: 'conditionExpired',
+          condition: conditionType,
+          targetName: combatant.name
+        })
+      })
     }
 
     round++

@@ -642,3 +642,56 @@
   color: #1565c0;
   font-weight: 600;
 }
+
+/* Condition Styles */
+.log-table tr.log-condition-applied {
+  background: #fff3e0;
+}
+
+.log-table tr.log-condition-expired {
+  background: #e8f5e9;
+}
+
+.log-table tr.log-incapacitated {
+  background: #f3e5f5;
+}
+
+.condition-label {
+  color: #e65100;
+  font-weight: 600;
+  text-align: center;
+}
+
+.condition-applied {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.condition-expired {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.incapacitated-label {
+  color: #7b1fa2;
+  font-weight: 600;
+  text-align: center;
+}
+
+.incapacitated {
+  color: #7b1fa2;
+  font-style: italic;
+}
+
+/* Advantage/Disadvantage */
+.roll-advantage {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+.roll-disadvantage {
+  color: #c62828;
+  font-weight: bold;
+  font-size: 0.8em;
+}
