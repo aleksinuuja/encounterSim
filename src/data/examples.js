@@ -37,7 +37,16 @@ export const exampleParty = [
     initiativeBonus: 0,
     isPlayer: true,
     numAttacks: 1,
-    healingDice: '1d8+3'
+    healingDice: '1d8+3',
+    // v0.6: Spellcasting
+    spellcastingAbility: 'wisdom',
+    spellcastingMod: 4,
+    spellSaveDC: 14,
+    spellAttackBonus: 6,
+    level: 5,
+    spellSlots: { 1: 4, 2: 3, 3: 2 },
+    cantrips: ['sacred-flame', 'toll-the-dead'],
+    spells: ['healing-word', 'cure-wounds', 'bless']
   },
   {
     id: 'sorcerer-1',
@@ -49,7 +58,16 @@ export const exampleParty = [
     initiativeBonus: 2,
     isPlayer: true,
     numAttacks: 1,
-    healingDice: null
+    healingDice: null,
+    // v0.6: Spellcasting
+    spellcastingAbility: 'charisma',
+    spellcastingMod: 4,
+    spellSaveDC: 14,
+    spellAttackBonus: 6,
+    level: 5,
+    spellSlots: { 1: 4, 2: 3, 3: 2 },
+    cantrips: ['fire-bolt'],
+    spells: ['magic-missile', 'fireball', 'scorching-ray']
   },
   {
     id: 'ranger-1',

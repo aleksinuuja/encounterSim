@@ -191,11 +191,11 @@ describe('conditions', () => {
   })
 
   it('ghoul can paralyze targets', () => {
-    const fighter = createFighter()
+    const fighter = createFighter({ constitutionSave: -5 }) // Easy to paralyze
     const ghoul = createGhoul()
 
     let foundParalysis = false
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 50; i++) {
       const result = runCombat([fighter], [ghoul], i)
       const paralyzeEvents = result.log.filter(e => e.conditionApplied === 'paralyzed')
       if (paralyzeEvents.length > 0) {

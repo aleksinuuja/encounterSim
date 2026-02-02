@@ -55,6 +55,21 @@ function FightLog({ results }) {
     if (entry.actionType === 'conditionExpired') return 'log-condition-expired'
     if (entry.actionType === 'conditionSave') return entry.savePassed ? 'log-condition-save-passed' : 'log-condition-save-failed'
     if (entry.actionType === 'incapacitated') return 'log-incapacitated'
+    // v0.6: Spellcasting
+    if (entry.actionType === 'spell') {
+      if (entry.effectType === 'heal') return 'log-heal'
+      if (entry.effectType === 'area') return 'log-spell-area'
+      if (entry.targetDied) return 'log-death'
+      if (entry.hit) return 'log-spell-hit'
+      return 'log-spell-miss'
+    }
+    if (entry.actionType === 'spellEffect') {
+      if (entry.targetDied) return 'log-death'
+      return entry.savePassed ? 'log-spell-saved' : 'log-spell-hit'
+    }
+    if (entry.actionType === 'concentrationCheck') {
+      return entry.maintained ? 'log-concentration-kept' : 'log-concentration-lost'
+    }
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
     if (entry.hit) return 'log-hit'
@@ -194,6 +209,105 @@ function FightLog({ results }) {
                               <span className="incapacitated">
                                 Can't act ({entry.conditions.join(', ')})
                               </span>
+                            </td>
+                          </>
+                        ) : entry.actionType === 'spell' ? (
+                          <>
+                            <td colSpan="2" className="spell-label">
+                              <span className="spell-name">{entry.spellName}</span>
+                              {entry.slotUsed > 0 && <span className="spell-slot"> (Lvl {entry.slotUsed})</span>}
+                            </td>
+                            <td>
+                              {entry.effectType === 'heal' ? (
+                                <>
+                                  <span className="healing">+{entry.healRoll} HP</span>
+                                  {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.revivedFromUnconscious && <span className="revived"> (back up!)</span>}
+                                </>
+                              ) : entry.effectType === 'area' ? (
+                                <>
+                                  <span className="spell-damage">{entry.baseDamage} base dmg</span>
+                                  {' → '}{entry.targetsHit} targets
+                                </>
+                              ) : entry.effectType === 'control' ? (
+                                <>
+                                  {entry.saveDC && (
+                                    <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                      {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
+                                    </span>
+                                  )}
+                                  {entry.resisted ? (
+                                    <span className="resisted"> Resisted</span>
+                                  ) : entry.conditionApplied ? (
+                                    <span className="condition-applied"> +{entry.conditionApplied.toUpperCase()}</span>
+                                  ) : null}
+                                  {entry.concentrating && <span className="concentrating"> (concentrating)</span>}
+                                </>
+                              ) : entry.attackRoll !== undefined ? (
+                                <>
+                                  <span className={entry.hit ? 'hit' : 'miss'}>
+                                    {entry.attackRoll}{entry.isCritical && ' CRIT!'} → {entry.totalAttack} vs {entry.targetAC}
+                                  </span>
+                                  {entry.hit && (
+                                    <>
+                                      {' '}<span className="spell-damage">{entry.damageRoll} dmg</span>
+                                      {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                    </>
+                                  )}
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              ) : entry.saveDC !== undefined ? (
+                                <>
+                                  <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                    {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
+                                  </span>
+                                  {entry.damageRoll !== undefined && (
+                                    <>
+                                      {' '}<span className="spell-damage">{entry.damageRoll} dmg</span>
+                                      {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                    </>
+                                  )}
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              ) : entry.projectiles ? (
+                                <>
+                                  <span className="spell-damage">{entry.damageRoll} dmg</span>
+                                  {' '}({entry.projectiles} darts)
+                                  {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              ) : (
+                                <span className="miss">No effect</span>
+                              )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'spellEffect' ? (
+                          <>
+                            <td colSpan="2" className="spell-effect-label">
+                              ↳ {entry.spellName}
+                            </td>
+                            <td>
+                              <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
+                              </span>
+                              {' '}<span className="spell-damage">{entry.damageRoll} dmg</span>
+                              {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                              {entry.targetDied && <span className="died"> DIED</span>}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'concentrationCheck' ? (
+                          <>
+                            <td colSpan="2" className="concentration-label">CONCENTRATION</td>
+                            <td>
+                              <span className={entry.maintained ? 'concentration-kept' : 'concentration-lost'}>
+                                CON {entry.saveTotal} vs DC {entry.saveDC}
+                              </span>
+                              {' '}
+                              {entry.maintained ? (
+                                <span className="maintained">{entry.spellName} maintained</span>
+                              ) : (
+                                <span className="lost">{entry.lostConcentration} lost!</span>
+                              )}
                             </td>
                           </>
                         ) : (

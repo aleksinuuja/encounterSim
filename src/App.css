@@ -837,3 +837,90 @@
   color: #ff6f00;
   font-weight: bold;
 }
+
+/* v0.6: Spellcasting Styles */
+.log-table tr.log-spell-hit {
+  background: #e8eaf6;
+}
+
+.log-table tr.log-spell-miss {
+  background: #f5f5f5;
+}
+
+.log-table tr.log-spell-area {
+  background: #fff3e0;
+}
+
+.log-table tr.log-spell-saved {
+  background: #e8f5e9;
+}
+
+.log-table tr.log-concentration-kept {
+  background: #e3f2fd;
+}
+
+.log-table tr.log-concentration-lost {
+  background: #fce4ec;
+}
+
+.spell-label {
+  color: #5c6bc0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.spell-name {
+  color: #3949ab;
+  font-weight: bold;
+}
+
+.spell-slot {
+  color: #7986cb;
+  font-size: 0.85em;
+}
+
+.spell-effect-label {
+  color: #7986cb;
+  font-style: italic;
+  text-align: center;
+}
+
+.spell-damage {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.concentration-label {
+  color: #1565c0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.concentration-kept {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.concentration-lost {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.maintained {
+  color: #2e7d32;
+}
+
+.lost {
+  color: #c62828;
+  font-weight: bold;
+}
+
+.concentrating {
+  color: #1565c0;
+  font-style: italic;
+}
+
+.resisted {
+  color: #666;
+  font-style: italic;
+}

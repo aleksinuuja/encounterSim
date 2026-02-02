@@ -10,9 +10,18 @@ import {
   tickConditions,
   processEndOfTurnSaves,
   applyCondition,
-  hasCondition,
   CONDITIONS
 } from './conditions.js'
+import {
+  canCastSpell,
+  castDamageSpell,
+  castHealingSpell,
+  castControlSpell,
+  castAreaSpell,
+  checkConcentration,
+  selectSpellToCast
+} from './spellcasting.js'
+import { consumeSpellSlot } from './spells.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -29,7 +38,10 @@ function rollInitiative(combatants) {
     isDead: false,
     deathSaveSuccesses: 0,
     deathSaveFailures: 0,
-    conditions: [] // v0.4: Track active conditions
+    conditions: [], // v0.4: Track active conditions
+    // v0.6: Spellcasting state
+    currentSlots: c.spellSlots ? { ...c.spellSlots } : null,
+    concentratingOn: null
   }))
 
   // Sort by initiative (descending)
@@ -135,10 +147,10 @@ function rollDeathSave(combatant, round, turn) {
  * @param {number} round - Current round number
  * @param {number} turn - Current turn number within the round
  * @param {Array} combatants - All combatants for condition logging
- * @param {Array} conditionLog - Array to push condition log entries
+ * @param {Array} log - Array to push log entries (for condition and concentration)
  * @returns {object} - Log entry for this attack
  */
-function executeAttack(attacker, target, round, turn, combatants, conditionLog) {
+function executeAttack(attacker, target, round, turn, combatants, log) {
   // Determine attack type (melee by default, could be extended later)
   const attackType = attacker.attackType || 'melee'
 
@@ -222,8 +234,16 @@ function executeAttack(attacker, target, round, turn, combatants, conditionLog) 
     logEntry.targetHpAfter = target.currentHp
     logEntry.targetDowned = target.currentHp <= 0
 
+    // v0.6: Check concentration when taking damage
+    if (target.concentratingOn && damage > 0 && target.currentHp > 0) {
+      const concLog = checkConcentration(target, damage, round, turn)
+      if (concLog && log) {
+        log.push(concLog)
+      }
+    }
+
     // Apply on-hit effects (e.g., poison from giant spider)
-    if (attacker.onHitEffect && conditionLog) {
+    if (attacker.onHitEffect && log) {
       const effect = attacker.onHitEffect
       // Roll save if applicable
       let savePassed = false
@@ -244,7 +264,7 @@ function executeAttack(attacker, target, round, turn, combatants, conditionLog) 
         })
 
         if (result === 'applied') {
-          conditionLog.push({
+          log.push({
             round,
             turn,
             actionType: 'conditionApplied',
@@ -369,7 +389,6 @@ export function runCombat(party, monsters, simulationId) {
   const log = []
 
   let round = 1
-  let turnCounter = 0
   const MAX_ROUNDS = 100 // Safety limit
 
   while (round <= MAX_ROUNDS) {
@@ -381,7 +400,6 @@ export function runCombat(party, monsters, simulationId) {
         continue
       }
 
-      turnCounter++
       turnInRound++
 
       // Handle unconscious combatants
@@ -435,6 +453,89 @@ export function runCombat(party, monsters, simulationId) {
         // Process end-of-turn saves and tick conditions
         processEndOfTurn(combatant, round, turnInRound, log)
 
+        continue
+      }
+
+      // v0.6: Check if combatant should cast a spell
+      let usedAction = false
+      let _usedBonusAction = false // Reserved for v0.7 action economy
+      const allies = combatants.filter(c => c.isPlayer === combatant.isPlayer && !c.isDead)
+      const enemies = combatants.filter(c => c.isPlayer !== combatant.isPlayer && !c.isDead)
+
+      if (combatant.spells || combatant.cantrips) {
+        const spellChoice = selectSpellToCast(combatant, allies, enemies)
+        if (spellChoice) {
+          const { spell, slotLevel, target: spellTarget, isBonusAction } = spellChoice
+          const canCast = canCastSpell(combatant, spell.key, slotLevel)
+
+          if (canCast.canCast) {
+            // Consume spell slot (if not cantrip)
+            if (spell.level > 0) {
+              consumeSpellSlot(combatant, slotLevel)
+            }
+
+            // Cast the spell based on effect type
+            if (spell.effectType === 'damage') {
+              if (spell.targetType === 'area') {
+                const areaLogs = castAreaSpell(combatant, spell, Array.isArray(spellTarget) ? spellTarget : [spellTarget], slotLevel, round, turnInRound)
+                areaLogs.forEach(entry => {
+                  log.push(entry)
+                  // Check concentration for each damaged target
+                  if (entry.damageRoll > 0) {
+                    const damaged = combatants.find(c => c.name === entry.targetName)
+                    if (damaged?.concentratingOn && damaged.currentHp > 0) {
+                      const concLog = checkConcentration(damaged, entry.damageRoll, round, turnInRound)
+                      if (concLog) log.push(concLog)
+                    }
+                  }
+                })
+              } else {
+                const dmgLog = castDamageSpell(combatant, spell, spellTarget, slotLevel, round, turnInRound)
+                log.push(dmgLog)
+                // Check concentration
+                if (dmgLog.damageRoll > 0 && spellTarget.concentratingOn && spellTarget.currentHp > 0) {
+                  const concLog = checkConcentration(spellTarget, dmgLog.damageRoll, round, turnInRound)
+                  if (concLog) log.push(concLog)
+                }
+              }
+            } else if (spell.effectType === 'heal') {
+              const healLog = castHealingSpell(combatant, spell, spellTarget, slotLevel, round, turnInRound)
+              log.push(healLog)
+            } else if (spell.effectType === 'control') {
+              const ctrlLog = castControlSpell(combatant, spell, spellTarget, slotLevel, round, turnInRound)
+              log.push(ctrlLog)
+            }
+
+            // Mark action/bonus action as used
+            if (isBonusAction) {
+              _usedBonusAction = true
+            } else {
+              usedAction = true
+            }
+
+            // Check if combat ended
+            const status = checkCombatStatus(combatants)
+            if (!status.shouldContinue) {
+              return {
+                id: simulationId,
+                partyWon: status.partyWon,
+                totalRounds: round,
+                survivingParty: combatants
+                  .filter(c => c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                survivingMonsters: combatants
+                  .filter(c => !c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                log
+              }
+            }
+          }
+        }
+      }
+
+      // If action already used, skip to end of turn
+      if (usedAction) {
+        processEndOfTurn(combatant, round, turnInRound, log)
         continue
       }
 

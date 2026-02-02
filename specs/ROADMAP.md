@@ -32,22 +32,31 @@
 
 ## Planned Versions
 
-### v0.4 - Conditions and Effects `[PLANNED]`
-- Conditions: prone, stunned, restrained, etc.
-- Condition effects on combat (advantage/disadvantage)
-- Duration tracking (until end of next turn, etc.)
+### v0.4 - Conditions and Effects `[IMPLEMENTED]`
+- Conditions: prone, stunned, poisoned, restrained, blinded
+- Advantage/disadvantage system
+- Duration tracking with end-of-turn saves
+- On-hit effects (Giant Spider poison, Wolf knockdown)
+- Monster preset dropdown
 
-### v0.5 - Saving Throws `[PLANNED]`
-- Ability-based saving throws
-- Effects that require saves (breath weapons, etc.)
-- Save-or-suck abilities
+### v0.5 - More Conditions and Immunities `[IMPLEMENTED]`
+- Additional conditions: paralyzed, frightened, charmed, incapacitated
+- Condition immunities (undead immune to poison/charm/fear)
+- Attack types (melee vs ranged)
+- Auto-crit on paralyzed/stunned targets
+- Vitest test suite (64 tests)
+- GitHub Actions CI pipeline
 
-### v0.6 - Spellcasting `[PLANNED]`
-- Spell slots and slot levels
-- Cantrips vs leveled spells
-- Concentration tracking
-- Common damage spells (Fireball, etc.)
-- Common buff/debuff spells
+### v0.6 - Spellcasting `[IMPLEMENTED]`
+- Spell slots and slot levels (1st through 3rd)
+- Cantrips vs leveled spells (Fire Bolt, Sacred Flame, Toll the Dead)
+- Concentration tracking with CON saves on damage
+- Damage spells (Magic Missile, Fireball, Scorching Ray)
+- Healing spells (Healing Word, Cure Wounds)
+- Control spells (Hold Person)
+- Buff spells (Bless, Haste, Shield)
+- Caster presets (Mage, Priest, Cultist)
+- 22 new tests (86 total)
 
 ### v0.7 - Action Economy `[PLANNED]`
 - Bonus actions

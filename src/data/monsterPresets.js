@@ -167,5 +167,68 @@ export const monsterPresets = [
     healingDice: null,
     conditionImmunities: ['poisoned', 'frightened', 'charmed', 'prone'],
     description: 'Incorporeal undead'
+  },
+  // === CASTERS (v0.6) ===
+  {
+    key: 'mage',
+    name: 'Mage',
+    maxHp: 40,
+    armorClass: 12,
+    attackBonus: 3,
+    damage: '1d4',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    // Spellcasting
+    spellcastingAbility: 'intelligence',
+    spellcastingMod: 4,
+    spellSaveDC: 14,
+    spellAttackBonus: 6,
+    level: 5,
+    spellSlots: { 1: 4, 2: 3, 3: 2 },
+    cantrips: ['fire-bolt', 'toll-the-dead'],
+    spells: ['magic-missile', 'fireball', 'hold-person'],
+    description: 'Fire Bolt cantrip, Fireball, Magic Missile'
+  },
+  {
+    key: 'priest',
+    name: 'Priest',
+    maxHp: 27,
+    armorClass: 13,
+    attackBonus: 2,
+    damage: '1d6',
+    initiativeBonus: 1,
+    numAttacks: 1,
+    healingDice: null,
+    // Spellcasting
+    spellcastingAbility: 'wisdom',
+    spellcastingMod: 3,
+    spellSaveDC: 13,
+    spellAttackBonus: 5,
+    level: 5,
+    spellSlots: { 1: 4, 2: 3 },
+    cantrips: ['sacred-flame'],
+    spells: ['healing-word', 'hold-person'],
+    description: 'Sacred Flame, Healing Word, Hold Person'
+  },
+  {
+    key: 'cultist',
+    name: 'Cultist',
+    maxHp: 9,
+    armorClass: 12,
+    attackBonus: 3,
+    damage: '1d4+1',
+    initiativeBonus: 1,
+    numAttacks: 1,
+    healingDice: null,
+    // Spellcasting (cantrips only)
+    spellcastingAbility: 'wisdom',
+    spellcastingMod: 2,
+    spellSaveDC: 12,
+    spellAttackBonus: 4,
+    level: 1,
+    cantrips: ['sacred-flame'],
+    spells: [],
+    description: 'Sacred Flame cantrip'
   }
 ]
