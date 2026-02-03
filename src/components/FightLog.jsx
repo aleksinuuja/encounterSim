@@ -83,6 +83,30 @@ function FightLog({ results }) {
       if (entry.hit) return 'log-reaction-hit'
       return 'log-reaction-miss'
     }
+    // v0.8: Advanced monster abilities
+    if (entry.actionType === 'multiattack') {
+      if (entry.targetDied) return 'log-death'
+      if (entry.hit) return 'log-hit'
+      return 'log-miss'
+    }
+    if (entry.actionType === 'breathWeapon') return 'log-breath-weapon'
+    if (entry.actionType === 'breathEffect') {
+      if (entry.targetDied) return 'log-death'
+      return entry.savePassed ? 'log-spell-saved' : 'log-breath-hit'
+    }
+    if (entry.actionType === 'legendaryAction') {
+      if (entry.effectType === 'area') return 'log-legendary-area'
+      if (entry.targetDied) return 'log-death'
+      if (entry.hit) return 'log-legendary-hit'
+      return 'log-legendary-miss'
+    }
+    if (entry.actionType === 'legendaryEffect') {
+      if (entry.targetDied) return 'log-death'
+      return entry.savePassed ? 'log-spell-saved' : 'log-legendary-hit'
+    }
+    if (entry.actionType === 'recharge') {
+      return entry.recharged ? 'log-recharge-success' : 'log-recharge-fail'
+    }
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
     if (entry.hit) return 'log-hit'
@@ -387,6 +411,101 @@ function FightLog({ results }) {
                                   {entry.targetDied && <span className="died"> DIED</span>}
                                 </>
                               )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'multiattack' ? (
+                          <>
+                            <td>
+                              {entry.attackRoll}
+                              {entry.attackRoll === 20 && ' (CRIT)'}
+                              {entry.attackRoll === 1 && ' (FUMBLE)'}
+                              {' → '}{entry.totalAttack}
+                            </td>
+                            <td>{entry.targetAC}</td>
+                            <td>
+                              <span className="attack-type">{entry.attackType}</span>
+                              {entry.hit ? (
+                                <>
+                                  {' '}<span className="damage">{entry.damageRoll} {entry.damageType}</span>
+                                  {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              ) : (
+                                <span className="miss"> Miss</span>
+                              )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'breathWeapon' ? (
+                          <>
+                            <td colSpan="2" className="breath-weapon-label">
+                              {entry.abilityName} ({entry.shape} {entry.size}ft)
+                            </td>
+                            <td>
+                              <span className="breath-damage">{entry.baseDamage} {entry.damageType}</span>
+                              {' → '}{entry.targetsHit} targets
+                            </td>
+                          </>
+                        ) : entry.actionType === 'breathEffect' ? (
+                          <>
+                            <td colSpan="2" className="breath-effect-label">
+                              ↳ {entry.abilityName}
+                            </td>
+                            <td>
+                              <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
+                              </span>
+                              {' '}<span className="breath-damage">{entry.damageRoll} dmg</span>
+                              {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                              {entry.targetDied && <span className="died"> DIED</span>}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'legendaryAction' ? (
+                          <>
+                            <td colSpan="2" className="legendary-label">
+                              LEGENDARY: {entry.abilityName} ({entry.cost} action{entry.cost > 1 ? 's' : ''})
+                            </td>
+                            <td>
+                              {entry.effectType === 'area' ? (
+                                <span className="legendary-damage">{entry.baseDamage} dmg (area)</span>
+                              ) : entry.hit ? (
+                                <>
+                                  <span className="hit">{entry.attackRoll} → {entry.totalAttack}</span>
+                                  {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                  {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              ) : (
+                                <span className="miss">Miss ({entry.attackRoll} → {entry.totalAttack} vs {entry.targetAC})</span>
+                              )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'legendaryEffect' ? (
+                          <>
+                            <td colSpan="2" className="legendary-effect-label">
+                              ↳ {entry.abilityName}
+                            </td>
+                            <td>
+                              <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                {entry.saveTotal} vs DC {entry.saveDC}
+                              </span>
+                              {!entry.savePassed && (
+                                <>
+                                  {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                  {entry.conditionApplied && <span className="condition-applied"> +{entry.conditionApplied.toUpperCase()}</span>}
+                                </>
+                              )}
+                              {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                              {entry.targetDied && <span className="died"> DIED</span>}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'recharge' ? (
+                          <>
+                            <td colSpan="2" className="recharge-label">RECHARGE</td>
+                            <td>
+                              <span className={entry.recharged ? 'recharge-success' : 'recharge-fail'}>
+                                {entry.abilityName}: {entry.roll}
+                              </span>
+                              {entry.recharged ? ' Recharged!' : ' Not yet'}
                             </td>
                           </>
                         ) : (

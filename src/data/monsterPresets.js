@@ -230,5 +230,155 @@ export const monsterPresets = [
     cantrips: ['sacred-flame'],
     spells: [],
     description: 'Sacred Flame cantrip'
+  },
+  // === ADVANCED MONSTERS (v0.8) ===
+  {
+    key: 'young-red-dragon',
+    name: 'Young Red Dragon',
+    maxHp: 178,
+    armorClass: 18,
+    attackBonus: 10,
+    damage: '2d10+6',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 4,
+    constitutionSave: 9,
+    wisdomSave: 4,
+    // Multiattack: bite + 2 claws
+    multiattack: [
+      { type: 'bite', attackBonus: 10, damage: '2d10+6', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 10, damage: '2d6+6', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 10, damage: '2d6+6', damageType: 'slashing' }
+    ],
+    // Fire Breath (Recharge 5-6)
+    rechargeAbilities: [
+      {
+        name: 'Fire Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 30,
+        saveDC: 17,
+        saveAbility: 'dexterity',
+        damage: '16d6',
+        damageType: 'fire',
+        saveEffect: 'half'
+      }
+    ],
+    conditionImmunities: ['frightened'],
+    description: 'Fire breath (16d6), multiattack (bite + 2 claws)'
+  },
+  {
+    key: 'adult-red-dragon',
+    name: 'Adult Red Dragon',
+    maxHp: 256,
+    armorClass: 19,
+    attackBonus: 14,
+    damage: '2d10+8',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 6,
+    constitutionSave: 13,
+    wisdomSave: 7,
+    // Multiattack: bite + 2 claws
+    multiattack: [
+      { type: 'bite', attackBonus: 14, damage: '2d10+8', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 14, damage: '2d6+8', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 14, damage: '2d6+8', damageType: 'slashing' }
+    ],
+    // Fire Breath (Recharge 5-6)
+    rechargeAbilities: [
+      {
+        name: 'Fire Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 60,
+        saveDC: 21,
+        saveAbility: 'dexterity',
+        damage: '18d6',
+        damageType: 'fire',
+        saveEffect: 'half'
+      }
+    ],
+    // Legendary Actions (3/round)
+    legendaryActions: 3,
+    legendaryAbilities: [
+      {
+        name: 'Tail Attack',
+        cost: 1,
+        type: 'attack',
+        attackBonus: 14,
+        damage: '2d8+8',
+        damageType: 'bludgeoning'
+      },
+      {
+        name: 'Wing Attack',
+        cost: 2,
+        type: 'area',
+        saveDC: 22,
+        saveAbility: 'dexterity',
+        damage: '2d6+8',
+        damageType: 'bludgeoning',
+        onFail: 'prone'
+      }
+    ],
+    conditionImmunities: ['frightened', 'charmed'],
+    description: 'Legendary (3 actions), fire breath (18d6), multiattack'
+  },
+  {
+    key: 'hill-giant',
+    name: 'Hill Giant',
+    maxHp: 105,
+    armorClass: 13,
+    attackBonus: 8,
+    damage: '3d8+5',
+    initiativeBonus: -1,
+    numAttacks: 1,
+    healingDice: null,
+    strengthSave: 8,
+    constitutionSave: 8,
+    // Multiattack: 2 greatclub
+    multiattack: [
+      { type: 'greatclub', attackBonus: 8, damage: '3d8+5', damageType: 'bludgeoning' },
+      { type: 'greatclub', attackBonus: 8, damage: '3d8+5', damageType: 'bludgeoning' }
+    ],
+    description: 'Multiattack (2 greatclub hits)'
+  },
+  {
+    key: 'mind-flayer',
+    name: 'Mind Flayer',
+    maxHp: 71,
+    armorClass: 15,
+    attackBonus: 7,
+    damage: '2d10+4',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    intelligenceSave: 8,
+    wisdomSave: 6,
+    // Mind Blast (Recharge 5-6)
+    rechargeAbilities: [
+      {
+        name: 'Mind Blast',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 60,
+        saveDC: 15,
+        saveAbility: 'intelligence',
+        damage: '4d8+4',
+        damageType: 'psychic',
+        saveEffect: 'none',
+        onFail: 'stunned'
+      }
+    ],
+    conditionImmunities: ['charmed'],
+    description: 'Mind blast (4d8+4 psychic, stun), tentacles'
   }
 ]

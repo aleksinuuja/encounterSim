@@ -980,3 +980,88 @@
   color: #888;
   font-style: italic;
 }
+
+/* v0.8: Advanced Monster Ability Styles */
+.log-table tr.log-breath-weapon {
+  background: #fff3e0;
+  font-weight: 600;
+}
+
+.log-table tr.log-breath-hit {
+  background: #ffecb3;
+}
+
+.log-table tr.log-legendary-area {
+  background: #f3e5f5;
+  font-weight: 600;
+}
+
+.log-table tr.log-legendary-hit {
+  background: #e1bee7;
+}
+
+.log-table tr.log-legendary-miss {
+  background: #f5f5f5;
+}
+
+.log-table tr.log-recharge-success {
+  background: #e8f5e9;
+}
+
+.log-table tr.log-recharge-fail {
+  background: #f5f5f5;
+}
+
+.breath-weapon-label {
+  color: #e65100;
+  font-weight: 700;
+  text-align: center;
+}
+
+.breath-effect-label {
+  color: #ff8f00;
+  font-style: italic;
+  text-align: center;
+}
+
+.breath-damage {
+  color: #bf360c;
+  font-weight: 600;
+}
+
+.legendary-label {
+  color: #6a1b9a;
+  font-weight: 700;
+  text-align: center;
+}
+
+.legendary-effect-label {
+  color: #8e24aa;
+  font-style: italic;
+  text-align: center;
+}
+
+.legendary-damage {
+  color: #6a1b9a;
+  font-weight: 600;
+}
+
+.attack-type {
+  color: #5d4037;
+  font-style: italic;
+}
+
+.recharge-label {
+  color: #00695c;
+  font-weight: 600;
+  text-align: center;
+}
+
+.recharge-success {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.recharge-fail {
+  color: #888;
+}

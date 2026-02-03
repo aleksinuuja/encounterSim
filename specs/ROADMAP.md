@@ -66,11 +66,13 @@
 - Second Wind for fighters (1d10+level healing)
 - 17 new tests (103 total)
 
-### v0.8 - Advanced Monster Abilities `[PLANNED]`
-- Legendary actions
-- Lair actions
-- Multiattack with different weapons
-- Special abilities (breath weapons, etc.)
+### v0.8 - Advanced Monster Abilities `[IMPLEMENTED]`
+- Legendary actions (3/round, different costs)
+- Multiattack with different weapons (bite + claws)
+- Recharge abilities (breath weapons recharge 5-6)
+- Area damage abilities (breath weapons)
+- Monster presets: Young/Adult Red Dragon, Hill Giant, Mind Flayer
+- 15 new tests (118 total)
 
 ### v0.9 - Data Import `[PLANNED]`
 - Import from D&D Beyond

@@ -31,6 +31,14 @@ import {
   shouldUseShield,
   applyShieldReaction
 } from './actions.js'
+import {
+  executeMultiattack,
+  executeBreathWeapon,
+  executeLegendaryAction,
+  selectLegendaryAction,
+  shouldUseBreathWeapon,
+  processRecharges
+} from './monsters.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -58,7 +66,13 @@ function rollInitiative(combatants) {
     actionSurgeUsed: false,
     secondWindUsed: false,
     shieldActive: false,
-    spiritualWeapon: null
+    spiritualWeapon: null,
+    // v0.8: Advanced monster abilities
+    currentLegendaryActions: c.legendaryActions || 0,
+    // Deep copy recharge abilities to track availability per combat
+    rechargeAbilities: c.rechargeAbilities
+      ? c.rechargeAbilities.map(a => ({ ...a, available: true }))
+      : null
   }))
 
   // Sort by initiative (descending)
@@ -576,6 +590,12 @@ export function runCombat(party, monsters, simulationId) {
         continue
       }
 
+      // v0.8: Process recharge abilities at start of monster turn
+      if (combatant.rechargeAbilities) {
+        const rechargeLogs = processRecharges(combatant, round, turnInRound)
+        rechargeLogs.forEach(entry => log.push(entry))
+      }
+
       // Check if combatant should heal instead of attack
       // Yo-yo healing: only heal unconscious allies
       const healingDice = combatant.healingDice
@@ -593,21 +613,13 @@ export function runCombat(party, monsters, simulationId) {
         }
       }
 
-      // Execute attacks (multi-attack support)
-      const numAttacks = combatant.numAttacks || 1
-      for (let attackNum = 0; attackNum < numAttacks; attackNum++) {
-        // Find a target for this attack
-        const target = selectTarget(combatants, combatant.isPlayer)
-        if (!target) {
-          // Combat is over
-          break
-        }
+      // v0.8: Check for breath weapon or other recharge abilities
+      const breathWeapon = shouldUseBreathWeapon(combatant, enemies)
+      if (breathWeapon) {
+        const breathLogs = executeBreathWeapon(combatant, breathWeapon, enemies, round, turnInRound)
+        breathLogs.forEach(entry => log.push(entry))
 
-        // Execute the attack (pass combatants and log for condition effects)
-        const logEntry = executeAttack(combatant, target, round, turnInRound, combatants, log)
-        log.push(logEntry)
-
-        // Check if combat is over
+        // Check if combat ended
         const status = checkCombatStatus(combatants)
         if (!status.shouldContinue) {
           return {
@@ -621,6 +633,61 @@ export function runCombat(party, monsters, simulationId) {
               .filter(c => !c.isPlayer && !c.isDead)
               .map(c => c.name),
             log
+          }
+        }
+      }
+
+      // v0.8: Use multiattack if available, otherwise standard attacks
+      if (combatant.multiattack) {
+        const multiLogs = executeMultiattack(combatant, enemies, round, turnInRound)
+        multiLogs.forEach(entry => log.push(entry))
+
+        // Check if combat ended
+        const status = checkCombatStatus(combatants)
+        if (!status.shouldContinue) {
+          return {
+            id: simulationId,
+            partyWon: status.partyWon,
+            totalRounds: round,
+            survivingParty: combatants
+              .filter(c => c.isPlayer && !c.isDead)
+              .map(c => c.name),
+            survivingMonsters: combatants
+              .filter(c => !c.isPlayer && !c.isDead)
+              .map(c => c.name),
+            log
+          }
+        }
+      } else {
+        // Execute standard attacks (multi-attack support)
+        const numAttacks = combatant.numAttacks || 1
+        for (let attackNum = 0; attackNum < numAttacks; attackNum++) {
+          // Find a target for this attack
+          const target = selectTarget(combatants, combatant.isPlayer)
+          if (!target) {
+            // Combat is over
+            break
+          }
+
+          // Execute the attack (pass combatants and log for condition effects)
+          const logEntry = executeAttack(combatant, target, round, turnInRound, combatants, log)
+          log.push(logEntry)
+
+          // Check if combat is over
+          const status = checkCombatStatus(combatants)
+          if (!status.shouldContinue) {
+            return {
+              id: simulationId,
+              partyWon: status.partyWon,
+              totalRounds: round,
+              survivingParty: combatants
+                .filter(c => c.isPlayer && !c.isDead)
+                .map(c => c.name),
+              survivingMonsters: combatants
+                .filter(c => !c.isPlayer && !c.isDead)
+                .map(c => c.name),
+              log
+            }
           }
         }
       }
@@ -669,7 +736,48 @@ export function runCombat(party, monsters, simulationId) {
 
       // Process end-of-turn saves and tick conditions
       processEndOfTurn(combatant, round, turnInRound, log)
+
+      // v0.8: Legendary actions - legendary monsters can act after each other creature's turn
+      const legendaryMonsters = combatants.filter(c =>
+        !c.isDead &&
+        !c.isUnconscious &&
+        c.legendaryActions > 0 &&
+        c !== combatant && // Not their own turn
+        c.currentLegendaryActions > 0
+      )
+
+      for (const legendary of legendaryMonsters) {
+        const legendaryAbility = selectLegendaryAction(legendary, allies)
+        if (legendaryAbility) {
+          const legLogs = executeLegendaryAction(legendary, legendaryAbility, allies, round, turnInRound)
+          legLogs.forEach(entry => log.push(entry))
+
+          // Check if combat ended
+          const status = checkCombatStatus(combatants)
+          if (!status.shouldContinue) {
+            return {
+              id: simulationId,
+              partyWon: status.partyWon,
+              totalRounds: round,
+              survivingParty: combatants
+                .filter(c => c.isPlayer && !c.isDead)
+                .map(c => c.name),
+              survivingMonsters: combatants
+                .filter(c => !c.isPlayer && !c.isDead)
+                .map(c => c.name),
+              log
+            }
+          }
+        }
+      }
     }
+
+    // v0.8: Reset legendary actions at end of round
+    combatants.forEach(c => {
+      if (c.legendaryActions > 0) {
+        c.currentLegendaryActions = c.legendaryActions
+      }
+    })
 
     round++
   }
