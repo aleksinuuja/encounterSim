@@ -7,8 +7,12 @@
  *
  * AOE shapes:
  * - 'sphere': Caster chooses which position group to hit (Fireball)
- * - 'cone': Hits front position only (breath weapons)
+ * - 'cone': Hits front position only (breath weapons) - directional, no friendly fire
  * - 'line': Hits 1 random target from each position group
+ *
+ * Friendly Fire:
+ * - Sphere AOE (Fireball) hits EVERYONE at a position - allies and enemies
+ * - Cone AOE (breath weapons) is directional - only hits enemies
  */
 
 /**
@@ -36,6 +40,20 @@ export function getDefaultPosition(combatant) {
 
   // Everyone else in front (melee fighters, clerics who wade in, etc.)
   return 'front'
+}
+
+/**
+ * Get ALL living combatants at a specific position (for friendly fire)
+ * @param {object[]} combatants - All combatants
+ * @param {'front' | 'back'} position - Position to filter by
+ * @returns {object[]}
+ */
+export function getAllAtPosition(combatants, position) {
+  return combatants.filter(c =>
+    !c.isDead &&
+    !c.isUnconscious &&
+    (c.position || getDefaultPosition(c)) === position
+  )
 }
 
 /**
@@ -80,7 +98,7 @@ export function getEnemiesByPosition(combatants, attackerIsPlayer) {
 }
 
 /**
- * Select targets for a sphere/radius AOE (like Fireball)
+ * Select targets for a sphere/radius AOE (like Fireball) - enemies only version
  * AI picks the position with more enemies
  * @param {object[]} combatants - All combatants
  * @param {boolean} casterIsPlayer - Is the caster a player?
@@ -94,6 +112,83 @@ export function selectSphereTargets(combatants, casterIsPlayer) {
     return { targets: front, position: 'front' }
   }
   return { targets: back, position: 'back' }
+}
+
+/**
+ * Select targets for a sphere AOE with friendly fire (Fireball)
+ * Hits EVERYONE at the position - allies and enemies
+ * AI evaluates if the damage trade-off is worth it
+ * @param {object[]} combatants - All combatants
+ * @param {boolean} casterIsPlayer - Is the caster a player?
+ * @param {number} avgDamage - Average spell damage for evaluation
+ * @returns {{ targets: object[], position: 'front' | 'back' | null, shouldCast: boolean, enemies: object[], allies: object[] }}
+ */
+export function selectSphereTargetsWithFriendlyFire(combatants, casterIsPlayer, avgDamage = 28) {
+  const allFront = getAllAtPosition(combatants, 'front')
+  const allBack = getAllAtPosition(combatants, 'back')
+
+  const frontEnemies = allFront.filter(c => c.isPlayer !== casterIsPlayer)
+  const frontAllies = allFront.filter(c => c.isPlayer === casterIsPlayer)
+  const backEnemies = allBack.filter(c => c.isPlayer !== casterIsPlayer)
+  const backAllies = allBack.filter(c => c.isPlayer === casterIsPlayer)
+
+  // Calculate damage value for each position
+  // Enemy damage is positive, ally damage is negative (weighted 2x)
+  const calcValue = (enemies, allies) => {
+    const enemyValue = enemies.reduce((sum, e) => {
+      // Value is capped at their current HP (no overkill bonus)
+      return sum + Math.min(e.currentHp, avgDamage)
+    }, 0)
+    const allyPenalty = allies.reduce((sum, a) => {
+      // Ally damage is weighted 2x - we really don't want to hurt friends
+      return sum + Math.min(a.currentHp, avgDamage) * 2
+    }, 0)
+    return enemyValue - allyPenalty
+  }
+
+  const frontValue = calcValue(frontEnemies, frontAllies)
+  const backValue = calcValue(backEnemies, backAllies)
+
+  // Need positive value AND at least 2 enemies to cast
+  if (frontValue > backValue && frontValue > 0 && frontEnemies.length >= 2) {
+    return {
+      targets: allFront,
+      position: 'front',
+      shouldCast: true,
+      enemies: frontEnemies,
+      allies: frontAllies
+    }
+  }
+
+  if (backValue > 0 && backEnemies.length >= 2) {
+    return {
+      targets: allBack,
+      position: 'back',
+      shouldCast: true,
+      enemies: backEnemies,
+      allies: backAllies
+    }
+  }
+
+  // Check if front is still worth it even if backValue was higher
+  if (frontValue > 0 && frontEnemies.length >= 2) {
+    return {
+      targets: allFront,
+      position: 'front',
+      shouldCast: true,
+      enemies: frontEnemies,
+      allies: frontAllies
+    }
+  }
+
+  // Not worth casting
+  return {
+    targets: [],
+    position: null,
+    shouldCast: false,
+    enemies: [],
+    allies: []
+  }
 }
 
 /**
@@ -150,7 +245,7 @@ export function selectLineTargets(combatants, attackerIsPlayer) {
  * @param {object} spell - The spell definition
  * @param {object[]} combatants - All combatants
  * @param {boolean} casterIsPlayer - Is the caster a player?
- * @returns {{ shouldCast: boolean, targets: object[], position?: string }}
+ * @returns {{ shouldCast: boolean, targets: object[], position?: string, enemies?: object[], allies?: object[] }}
  */
 export function selectAOETargets(spell, combatants, casterIsPlayer) {
   const aoeShape = spell.aoeShape || 'sphere' // Default to sphere
@@ -173,10 +268,22 @@ export function selectAOETargets(spell, combatants, casterIsPlayer) {
     }
   }
 
-  // Sphere (default) - hit the position with more enemies
+  // Sphere - check for friendly fire
+  if (spell.friendlyFire) {
+    const result = selectSphereTargetsWithFriendlyFire(combatants, casterIsPlayer)
+    return {
+      shouldCast: result.shouldCast,
+      targets: result.targets,
+      position: result.position,
+      enemies: result.enemies,
+      allies: result.allies
+    }
+  }
+
+  // Sphere without friendly fire - enemies only
   const { targets, position } = selectSphereTargets(combatants, casterIsPlayer)
   return {
-    shouldCast: targets.length >= 2, // Fireball is worth it with 2+ targets
+    shouldCast: targets.length >= 2,
     targets,
     position
   }

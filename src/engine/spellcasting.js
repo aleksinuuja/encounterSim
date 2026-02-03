@@ -323,6 +323,10 @@ export function castAreaSpell(caster, spell, targets, slotLevel, round, turn, ta
   const { total: baseDamage } = rollDice(damageDice)
   const dc = caster.spellSaveDC || 13
 
+  // Count allies and enemies for main log
+  const enemies = targets.filter(t => t.isPlayer !== caster.isPlayer)
+  const allies = targets.filter(t => t.isPlayer === caster.isPlayer)
+
   // Main log entry for the spell cast
   const mainLog = {
     round,
@@ -334,12 +338,19 @@ export function castAreaSpell(caster, spell, targets, slotLevel, round, turn, ta
     slotUsed: slotLevel,
     effectType: 'area',
     targetsHit: targets.length,
+    enemiesHit: enemies.length,
+    alliesHit: allies.length,
     baseDamage
   }
 
   // Add position info if available
   if (targetPosition) {
     mainLog.targetPosition = targetPosition
+  }
+
+  // Mark if this involved friendly fire
+  if (allies.length > 0) {
+    mainLog.friendlyFire = true
   }
 
   logs.push(mainLog)
@@ -360,6 +371,9 @@ export function castAreaSpell(caster, spell, targets, slotLevel, round, turn, ta
     const hpBefore = target.currentHp
     target.currentHp = Math.max(0, target.currentHp - damage)
 
+    // Check if this is an ally (friendly fire)
+    const isAlly = target.isPlayer === caster.isPlayer
+
     const targetLog = {
       round,
       turn,
@@ -374,7 +388,8 @@ export function castAreaSpell(caster, spell, targets, slotLevel, round, turn, ta
       savePassed: saved,
       damageRoll: damage,
       targetHpBefore: hpBefore,
-      targetHpAfter: target.currentHp
+      targetHpAfter: target.currentHp,
+      isAlly // Mark friendly fire victims
     }
 
     if (target.currentHp <= 0) {

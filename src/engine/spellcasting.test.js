@@ -300,11 +300,14 @@ describe('selectSpellToCast', () => {
   })
 
   it('casts Fireball against multiple enemies', () => {
-    const wizard = createWizard()
+    // Wizard positioned in back so they're not in the friendly fire zone
+    const wizard = createWizard({ position: 'back', isPlayer: true })
     const enemies = [
-      createTarget({ name: 'Enemy 1', isPlayer: false, isDead: false }),
-      createTarget({ name: 'Enemy 2', isPlayer: false, isDead: false })
+      createTarget({ name: 'Enemy 1', isPlayer: false, isDead: false, position: 'front' }),
+      createTarget({ name: 'Enemy 2', isPlayer: false, isDead: false, position: 'front' })
     ]
+    // Enemy value: min(50,28)*2 = 56, Ally penalty: 0 (no allies at front)
+    // Net: 56 > 0, so shouldCast = true
 
     const result = selectSpellToCast(wizard, [wizard], enemies)
 

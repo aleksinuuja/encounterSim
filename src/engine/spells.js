@@ -206,13 +206,14 @@ export const SPELLS = {
     range: 150,
     areaRadius: 20,
     aoeShape: 'sphere', // Hits chosen position group (front or back)
+    friendlyFire: true, // Hits allies at same position!
     effectType: 'damage',
     damageType: 'fire',
     damageDice: '8d6',
     saveAbility: 'dexterity',
     saveEffect: 'half',
     upcastDamage: '1d6',
-    description: '8d6 fire in 20ft radius, DEX save for half'
+    description: '8d6 fire in 20ft radius, DEX save for half (friendly fire!)'
   },
 
   'counterspell': {

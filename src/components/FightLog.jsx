@@ -65,6 +65,7 @@ function FightLog({ results }) {
     }
     if (entry.actionType === 'spellEffect') {
       if (entry.targetDied) return 'log-death'
+      if (entry.isAlly) return entry.savePassed ? 'log-friendly-fire-saved' : 'log-friendly-fire'
       return entry.savePassed ? 'log-spell-saved' : 'log-spell-hit'
     }
     if (entry.actionType === 'concentrationCheck') {
@@ -264,7 +265,16 @@ function FightLog({ results }) {
                               ) : entry.effectType === 'area' ? (
                                 <>
                                   <span className="spell-damage">{entry.baseDamage} base dmg</span>
-                                  {' → '}{entry.targetsHit} targets
+                                  {' → '}
+                                  {entry.friendlyFire ? (
+                                    <>
+                                      <span className="enemies-hit">{entry.enemiesHit} enemies</span>
+                                      {', '}
+                                      <span className="allies-hit">{entry.alliesHit} allies</span>
+                                    </>
+                                  ) : (
+                                    <>{entry.targetsHit} targets</>
+                                  )}
                                   {entry.targetPosition && (
                                     <span className={`position-indicator position-${entry.targetPosition}`}>
                                       {' '}({entry.targetPosition} line)
@@ -327,13 +337,15 @@ function FightLog({ results }) {
                           <>
                             <td colSpan="2" className="spell-effect-label">
                               ↳ {entry.spellName}
+                              {entry.isAlly && <span className="friendly-fire-indicator"> [ALLY]</span>}
                             </td>
                             <td>
                               <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
                                 {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
                               </span>
-                              {' '}<span className="spell-damage">{entry.damageRoll} dmg</span>
+                              {' '}<span className={entry.isAlly ? 'friendly-fire-damage' : 'spell-damage'}>{entry.damageRoll} dmg</span>
                               {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                              {entry.targetDowned && <span className="downed"> DOWNED</span>}
                               {entry.targetDied && <span className="died"> DIED</span>}
                             </td>
                           </>

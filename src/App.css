@@ -830,6 +830,36 @@
   color: #1565c0;
 }
 
+/* Friendly fire styles */
+.friendly-fire-indicator {
+  color: #ff6f00;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.friendly-fire-damage {
+  color: #ff6f00;
+  font-weight: 600;
+}
+
+.enemies-hit {
+  color: #c62828;
+}
+
+.allies-hit {
+  color: #ff6f00;
+  font-weight: 600;
+}
+
+/* Friendly fire log rows */
+.log-friendly-fire {
+  background-color: #fff3e0;
+}
+
+.log-friendly-fire-saved {
+  background-color: #fff8e1;
+}
+
 /* Condition Save Styles */
 .log-table tr.log-condition-save-passed {
   background: #e8f5e9;
