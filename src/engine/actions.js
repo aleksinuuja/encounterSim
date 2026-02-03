@@ -185,6 +185,8 @@ export function executeOpportunityAttack(attacker, target, round, turn) {
   }
 
   if (attackRoll === 1) {
+    // Nat 1 auto-miss, but reaction is still consumed
+    attacker.hasReaction = false
     return logEntry
   }
 

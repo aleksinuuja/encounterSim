@@ -284,10 +284,6 @@ describe('legendary actions', () => {
   })
 
   it('executeLegendaryAction area effect applies conditions on fail', () => {
-    const dragon = createAdultDragon()
-    const ability = dragon.legendaryAbilities[1] // Wing Attack
-    const target = createTarget({ dexteritySave: -10 }) // Will fail
-
     // Run until we see a failed save
     let foundCondition = false
     for (let i = 0; i < 20; i++) {

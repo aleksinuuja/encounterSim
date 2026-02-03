@@ -101,11 +101,19 @@ function checkCombatStatus(combatants) {
   const livingPlayers = combatants.filter(c => c.isPlayer && !c.isDead)
   const livingMonsters = combatants.filter(c => !c.isPlayer && !c.isDead)
 
+  // All players dead = party lost
   if (livingPlayers.length === 0) {
     return { shouldContinue: false, partyWon: false }
   }
+  // All monsters dead = party won
   if (livingMonsters.length === 0) {
     return { shouldContinue: false, partyWon: true }
+  }
+  // All players are unconscious (none can fight) = party lost
+  // Monsters won't finish off unconscious players in default AI, so end combat
+  const consciousPlayers = livingPlayers.filter(c => !c.isUnconscious)
+  if (consciousPlayers.length === 0) {
+    return { shouldContinue: false, partyWon: false }
   }
   return { shouldContinue: true, partyWon: null }
 }

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import {
   CONDITIONS,
   hasCondition,
-  getCondition,
   applyCondition,
   removeCondition,
   tickConditions,

@@ -141,12 +141,14 @@ describe('death saves', () => {
   })
 
   it('death saves are rolled for unconscious players', () => {
-    const weakPlayer = createFighter({ maxHp: 10, armorClass: 8 })
+    // Need 2 players so combat continues when one goes down
+    const weakPlayer = createFighter({ name: 'Weak Fighter', maxHp: 10, armorClass: 8 })
+    const toughPlayer = createFighter({ name: 'Tough Fighter', maxHp: 100, armorClass: 20 })
     const orc = createOrc()
 
     let foundDeathSave = false
-    for (let i = 0; i < 30; i++) {
-      const result = runCombat([weakPlayer], [orc], i)
+    for (let i = 0; i < 50; i++) {
+      const result = runCombat([weakPlayer, toughPlayer], [orc], i)
       const deathSaves = result.log.filter(e => e.actionType === 'deathSave')
       if (deathSaves.length > 0) {
         foundDeathSave = true

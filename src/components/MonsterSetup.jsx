@@ -28,7 +28,7 @@ function MonsterSetup({ monsters, setMonsters }) {
   }
 
   const handleAddPreset = (preset) => {
-    const { key, description, ...monsterData } = preset
+    const { key: _key, description: _desc, ...monsterData } = preset
     setMonsters([...monsters, { ...monsterData, id: generateId('monster'), isPlayer: false }])
     setShowDropdown(false)
   }
@@ -128,22 +128,6 @@ function MonsterSetup({ monsters, setMonsters }) {
                   {c.name}
                   {c.attackType === 'ranged' && (
                     <span className="attack-type-badge" title="Ranged attack">R</span>
-                  )}
-                  {c.onHitEffect && (
-                    <span
-                      className="effect-badge"
-                      title={`On hit: ${c.onHitEffect.condition} (DC ${c.onHitEffect.saveDC} ${c.onHitEffect.saveAbility?.toUpperCase()}, ${c.onHitEffect.duration} rounds)`}
-                    >
-                      {c.onHitEffect.condition}
-                    </span>
-                  )}
-                  {c.conditionImmunities?.length > 0 && (
-                    <span
-                      className="immunity-badge"
-                      title={`Immune: ${c.conditionImmunities.join(', ')}`}
-                    >
-                      IMM
-                    </span>
                   )}
                 </td>
                 <td>{c.maxHp}</td>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const defaultCombatant = {
   name: '',
@@ -11,23 +11,21 @@ const defaultCombatant = {
   healingDice: ''
 }
 
-function CombatantForm({ combatant, onSave, onCancel }) {
-  const [form, setForm] = useState(defaultCombatant)
-  const [errors, setErrors] = useState({})
-
-  useEffect(() => {
-    if (combatant) {
-      // Handle migration: ensure new fields have defaults
-      setForm({
-        ...defaultCombatant,
-        ...combatant,
-        numAttacks: combatant.numAttacks || 1,
-        healingDice: combatant.healingDice || ''
-      })
-    } else {
-      setForm(defaultCombatant)
+function getInitialForm(combatant) {
+  if (combatant) {
+    return {
+      ...defaultCombatant,
+      ...combatant,
+      numAttacks: combatant.numAttacks || 1,
+      healingDice: combatant.healingDice || ''
     }
-  }, [combatant])
+  }
+  return defaultCombatant
+}
+
+function CombatantForm({ combatant, onSave, onCancel }) {
+  const [form, setForm] = useState(() => getInitialForm(combatant))
+  const [errors, setErrors] = useState({})
 
   const handleChange = (e) => {
     const { name, value, type } = e.target
