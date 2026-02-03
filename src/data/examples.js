@@ -13,7 +13,12 @@ export const exampleParty = [
     initiativeBonus: 2,
     isPlayer: true,
     numAttacks: 2,
-    healingDice: null
+    healingDice: null,
+    level: 5,
+    // v0.7: Action economy features
+    hasSecondWind: true,
+    hasActionSurge: true,
+    constitutionSave: 5
   },
   {
     id: 'rogue-1',
@@ -25,7 +30,12 @@ export const exampleParty = [
     initiativeBonus: 4,
     isPlayer: true,
     numAttacks: 1,
-    healingDice: null
+    healingDice: null,
+    level: 5,
+    // v0.7: Two-weapon fighting
+    hasTwoWeaponFighting: true,
+    offHandDamage: '1d6',
+    dexteritySave: 7
   },
   {
     id: 'cleric-1',

@@ -58,11 +58,13 @@
 - Caster presets (Mage, Priest, Cultist)
 - 22 new tests (86 total)
 
-### v0.7 - Action Economy `[PLANNED]`
-- Bonus actions
-- Reactions
-- Opportunity attacks
-- Action surge, cunning action, etc.
+### v0.7 - Action Economy `[IMPLEMENTED]`
+- Bonus actions (off-hand attack, Second Wind, Spiritual Weapon)
+- Reactions (Shield spell blocks attacks)
+- Action/bonus action/reaction tracking per turn
+- Two-weapon fighting for rogues
+- Second Wind for fighters (1d10+level healing)
+- 17 new tests (103 total)
 
 ### v0.8 - Advanced Monster Abilities `[PLANNED]`
 - Legendary actions

@@ -70,6 +70,19 @@ function FightLog({ results }) {
     if (entry.actionType === 'concentrationCheck') {
       return entry.maintained ? 'log-concentration-kept' : 'log-concentration-lost'
     }
+    // v0.7: Action economy
+    if (entry.actionType === 'bonusAction') {
+      if (entry.bonusActionType === 'secondWind') return 'log-heal'
+      if (entry.targetDied) return 'log-death'
+      if (entry.hit) return 'log-bonus-hit'
+      return 'log-bonus-miss'
+    }
+    if (entry.actionType === 'reaction') {
+      if (entry.reactionType === 'shield') return entry.blocked ? 'log-shield-blocked' : 'log-shield-failed'
+      if (entry.targetDied) return 'log-death'
+      if (entry.hit) return 'log-reaction-hit'
+      return 'log-reaction-miss'
+    }
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
     if (entry.hit) return 'log-hit'
@@ -307,6 +320,72 @@ function FightLog({ results }) {
                                 <span className="maintained">{entry.spellName} maintained</span>
                               ) : (
                                 <span className="lost">{entry.lostConcentration} lost!</span>
+                              )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'bonusAction' ? (
+                          <>
+                            <td colSpan="2" className="bonus-action-label">
+                              BONUS: {entry.bonusActionType === 'offHandAttack' ? 'Off-hand' :
+                                      entry.bonusActionType === 'secondWind' ? 'Second Wind' :
+                                      entry.bonusActionType === 'spiritualWeapon' ? 'Spiritual Weapon' :
+                                      entry.bonusActionType}
+                            </td>
+                            <td>
+                              {entry.bonusActionType === 'secondWind' ? (
+                                <>
+                                  <span className="healing">+{entry.healRoll} HP</span>
+                                  {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                </>
+                              ) : (
+                                <>
+                                  <span className={entry.hit ? 'hit' : 'miss'}>
+                                    {entry.attackRoll}{entry.isCritical && ' CRIT!'} → {entry.totalAttack} vs {entry.targetAC}
+                                  </span>
+                                  {entry.hit && (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                      {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                    </>
+                                  )}
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
+                              )}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'reaction' ? (
+                          <>
+                            <td colSpan="2" className="reaction-label">
+                              REACTION: {entry.reactionType === 'shield' ? 'Shield' :
+                                         entry.reactionType === 'opportunityAttack' ? 'Opportunity Attack' :
+                                         entry.reactionType}
+                            </td>
+                            <td>
+                              {entry.reactionType === 'shield' ? (
+                                <>
+                                  <span className={entry.blocked ? 'shield-blocked' : 'shield-failed'}>
+                                    AC {entry.originalAC} → {entry.newAC}
+                                  </span>
+                                  {' '}vs {entry.incomingAttack}
+                                  {entry.blocked ? (
+                                    <span className="blocked"> BLOCKED!</span>
+                                  ) : (
+                                    <span className="not-blocked"> (still hit)</span>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <span className={entry.hit ? 'hit' : 'miss'}>
+                                    {entry.attackRoll}{entry.isCritical && ' CRIT!'} → {entry.totalAttack} vs {entry.targetAC}
+                                  </span>
+                                  {entry.hit && (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                      {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
+                                    </>
+                                  )}
+                                  {entry.targetDied && <span className="died"> DIED</span>}
+                                </>
                               )}
                             </td>
                           </>

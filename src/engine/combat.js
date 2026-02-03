@@ -22,6 +22,15 @@ import {
   selectSpellToCast
 } from './spellcasting.js'
 import { consumeSpellSlot } from './spells.js'
+import {
+  executeOffHandAttack,
+  executeSecondWind,
+  executeSpiritualWeaponAttack,
+  selectBonusAction,
+  tickSpiritualWeapon,
+  shouldUseShield,
+  applyShieldReaction
+} from './actions.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -41,7 +50,15 @@ function rollInitiative(combatants) {
     conditions: [], // v0.4: Track active conditions
     // v0.6: Spellcasting state
     currentSlots: c.spellSlots ? { ...c.spellSlots } : null,
-    concentratingOn: null
+    concentratingOn: null,
+    // v0.7: Action economy
+    hasAction: true,
+    hasBonusAction: true,
+    hasReaction: true,
+    actionSurgeUsed: false,
+    secondWindUsed: false,
+    shieldActive: false,
+    spiritualWeapon: null
   }))
 
   // Sort by initiative (descending)
@@ -217,7 +234,21 @@ function executeAttack(attacker, target, round, turn, combatants, log) {
 
   // Natural 20 always hits and crits, also auto-crit against paralyzed/stunned
   const isCritical = attackRoll === 20 || hasAutoCritCondition
-  const hit = isCritical || totalAttack >= target.armorClass
+  let hit = isCritical || totalAttack >= target.armorClass
+
+  // v0.7: Check for Shield reaction (can't block crits)
+  if (hit && !isCritical && shouldUseShield(target, totalAttack)) {
+    const shieldResult = applyShieldReaction(target, totalAttack, logEntry.round, logEntry.turn)
+    if (log) log.push(shieldResult.log)
+    if (shieldResult.blocked) {
+      hit = false
+      logEntry.shieldBlocked = true
+    }
+    // Consume spell slot for Shield
+    if (target.currentSlots) {
+      target.currentSlots[1]--
+    }
+  }
 
   if (hit) {
     logEntry.hit = true
@@ -401,6 +432,12 @@ export function runCombat(party, monsters, simulationId) {
       }
 
       turnInRound++
+
+      // v0.7: Reset action economy at start of turn
+      combatant.hasAction = true
+      combatant.hasBonusAction = true
+      combatant.hasReaction = true // Reaction resets at start of YOUR turn
+      combatant.shieldActive = false // Shield expires at start of your turn
 
       // Handle unconscious combatants
       if (combatant.isUnconscious) {
@@ -587,6 +624,48 @@ export function runCombat(party, monsters, simulationId) {
           }
         }
       }
+
+      // v0.7: Process bonus action (if not already used by spell)
+      if (combatant.hasBonusAction) {
+        const bonusAction = selectBonusAction(combatant, allies, enemies)
+        if (bonusAction) {
+          let baLog = null
+          const baTarget = bonusAction.target || selectTarget(combatants, combatant.isPlayer)
+
+          if (bonusAction.type === 'spiritualWeapon' && baTarget) {
+            baLog = executeSpiritualWeaponAttack(combatant, baTarget, round, turnInRound)
+          } else if (bonusAction.type === 'secondWind') {
+            baLog = executeSecondWind(combatant, round, turnInRound)
+          } else if (bonusAction.type === 'offHandAttack' && baTarget) {
+            baLog = executeOffHandAttack(combatant, baTarget, round, turnInRound)
+          }
+
+          if (baLog) {
+            log.push(baLog)
+            combatant.hasBonusAction = false
+
+            // Check if combat ended
+            const status = checkCombatStatus(combatants)
+            if (!status.shouldContinue) {
+              return {
+                id: simulationId,
+                partyWon: status.partyWon,
+                totalRounds: round,
+                survivingParty: combatants
+                  .filter(c => c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                survivingMonsters: combatants
+                  .filter(c => !c.isPlayer && !c.isDead)
+                  .map(c => c.name),
+                log
+              }
+            }
+          }
+        }
+      }
+
+      // v0.7: Tick spiritual weapon duration
+      tickSpiritualWeapon(combatant)
 
       // Process end-of-turn saves and tick conditions
       processEndOfTurn(combatant, round, turnInRound, log)
