@@ -281,6 +281,19 @@ export function executeLegendaryAction(monster, ability, targets, round, turn) {
     logs.push(logEntry)
   } else if (ability.type === 'area') {
     // Area effect (like Wing Attack)
+    // If meleeRange is true, only hit front-line targets
+    let areaTargets = livingTargets
+    if (ability.meleeRange) {
+      areaTargets = livingTargets.filter(t =>
+        (t.position || getDefaultPosition(t)) === 'front'
+      )
+    }
+
+    if (areaTargets.length === 0) {
+      // No valid targets in range
+      return logs
+    }
+
     const { total: baseDamage } = rollDice(ability.damage)
 
     logs.push({
@@ -291,10 +304,12 @@ export function executeLegendaryAction(monster, ability, targets, round, turn) {
       abilityName: ability.name,
       cost: ability.cost,
       effectType: 'area',
-      baseDamage
+      baseDamage,
+      targetsHit: areaTargets.length,
+      meleeRange: ability.meleeRange || false
     })
 
-    for (const target of livingTargets) {
+    for (const target of areaTargets) {
       const saveRoll = rollD20()
       const saveBonus = target[ability.saveAbility + 'Save'] || 0
       const saveTotal = saveRoll + saveBonus
