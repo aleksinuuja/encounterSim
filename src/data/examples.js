@@ -15,6 +15,7 @@ export const exampleParty = [
     numAttacks: 2,
     healingDice: null,
     level: 5,
+    position: 'front',
     // v0.7: Action economy features
     hasSecondWind: true,
     hasActionSurge: true,
@@ -32,6 +33,7 @@ export const exampleParty = [
     numAttacks: 1,
     healingDice: null,
     level: 5,
+    position: 'front',
     // v0.7: Two-weapon fighting
     hasTwoWeaponFighting: true,
     offHandDamage: '1d6',
@@ -48,6 +50,7 @@ export const exampleParty = [
     isPlayer: true,
     numAttacks: 1,
     healingDice: '1d8+3',
+    position: 'front',
     // v0.6: Spellcasting
     spellcastingAbility: 'wisdom',
     spellcastingMod: 4,
@@ -69,6 +72,7 @@ export const exampleParty = [
     isPlayer: true,
     numAttacks: 1,
     healingDice: null,
+    position: 'back',
     // v0.6: Spellcasting
     spellcastingAbility: 'charisma',
     spellcastingMod: 4,
@@ -89,7 +93,9 @@ export const exampleParty = [
     initiativeBonus: 3,
     isPlayer: true,
     numAttacks: 1,
-    healingDice: null
+    healingDice: null,
+    position: 'back',
+    attackType: 'ranged'
   }
 ]
 

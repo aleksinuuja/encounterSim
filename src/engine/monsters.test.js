@@ -140,7 +140,8 @@ describe('recharge abilities', () => {
 describe('multiattack', () => {
   it('executes multiple attacks', () => {
     const dragon = createDragon()
-    const targets = [createTarget({ armorClass: 10 })] // Easy to hit
+    // Use high HP so target survives all 3 attacks
+    const targets = [createTarget({ armorClass: 10, currentHp: 200, maxHp: 200 })]
 
     const logs = executeMultiattack(dragon, targets, 1, 1)
 

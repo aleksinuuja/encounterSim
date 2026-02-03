@@ -14,6 +14,7 @@ import {
   getKnownSpells
 } from './spells.js'
 import { applyCondition } from './conditions.js'
+import { selectAOETargets } from './positioning.js'
 
 /**
  * Check if a caster can cast a specific spell
@@ -313,16 +314,17 @@ export function castControlSpell(caster, spell, target, slotLevel, round, turn) 
  * @param {number} slotLevel - Slot level used
  * @param {number} round - Current round
  * @param {number} turn - Current turn
+ * @param {string} targetPosition - Position group targeted ('front' or 'back')
  * @returns {object[]} - Array of log entries
  */
-export function castAreaSpell(caster, spell, targets, slotLevel, round, turn) {
+export function castAreaSpell(caster, spell, targets, slotLevel, round, turn, targetPosition = null) {
   const logs = []
   const damageDice = getSpellDamage(spell, slotLevel)
   const { total: baseDamage } = rollDice(damageDice)
   const dc = caster.spellSaveDC || 13
 
   // Main log entry for the spell cast
-  logs.push({
+  const mainLog = {
     round,
     turn,
     actorName: caster.name,
@@ -333,7 +335,14 @@ export function castAreaSpell(caster, spell, targets, slotLevel, round, turn) {
     effectType: 'area',
     targetsHit: targets.length,
     baseDamage
-  })
+  }
+
+  // Add position info if available
+  if (targetPosition) {
+    mainLog.targetPosition = targetPosition
+  }
+
+  logs.push(mainLog)
 
   // Individual target effects
   for (const target of targets) {
@@ -465,16 +474,20 @@ export function selectSpellToCast(caster, allies, enemies) {
     }
   }
 
-  // Priority 2: Fireball if 2+ enemies
-  if (livingEnemies.length >= 2) {
-    const fireball = knownSpells.find(s => s.key === 'fireball')
-    if (fireball) {
-      const slot = findAvailableSlot(caster, 3)
-      if (slot) {
+  // Priority 2: Fireball if 2+ enemies in same position
+  const fireball = knownSpells.find(s => s.key === 'fireball')
+  if (fireball) {
+    const slot = findAvailableSlot(caster, 3)
+    if (slot) {
+      // Use position-aware targeting - combine allies and enemies for full combatants list
+      const allCombatants = [...allies, ...enemies]
+      const aoeResult = selectAOETargets(fireball, allCombatants, caster.isPlayer)
+      if (aoeResult.shouldCast && aoeResult.targets.length >= 2) {
         return {
           spell: fireball,
           slotLevel: slot,
-          target: livingEnemies // All enemies (simplified - no positioning)
+          target: aoeResult.targets,
+          targetPosition: aoeResult.position
         }
       }
     }

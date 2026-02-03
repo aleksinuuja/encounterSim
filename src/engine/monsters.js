@@ -5,6 +5,7 @@
 
 import { rollD20, rollDice } from './dice.js'
 import { applyCondition } from './conditions.js'
+import { getDefaultPosition } from './positioning.js'
 
 /**
  * Roll to recharge an ability
@@ -107,14 +108,15 @@ export function executeMultiattack(attacker, targets, round, turn) {
  * @param {object[]} targets - All targets in area
  * @param {number} round - Current round
  * @param {number} turn - Current turn
+ * @param {string} targetPosition - Position group targeted ('front' or 'back')
  * @returns {object[]} - Array of log entries
  */
-export function executeBreathWeapon(monster, ability, targets, round, turn) {
+export function executeBreathWeapon(monster, ability, targets, round, turn, targetPosition = null) {
   const logs = []
   const { total: baseDamage } = rollDice(ability.damage)
 
   // Main log entry for the breath weapon
-  logs.push({
+  const mainLog = {
     round,
     turn,
     actorName: monster.name,
@@ -125,7 +127,14 @@ export function executeBreathWeapon(monster, ability, targets, round, turn) {
     baseDamage,
     damageType: ability.damageType,
     targetsHit: targets.length
-  })
+  }
+
+  // Add position info if available
+  if (targetPosition) {
+    mainLog.targetPosition = targetPosition
+  }
+
+  logs.push(mainLog)
 
   // Mark ability as used
   ability.available = false
@@ -346,6 +355,7 @@ export function selectLegendaryAction(monster, enemies) {
 
 /**
  * Check if monster should use breath weapon
+ * Breath weapons are cones - they primarily hit the front line
  * @param {object} monster - The monster
  * @param {object[]} enemies - Enemy combatants
  * @returns {object|null} - The breath weapon ability or null
@@ -354,16 +364,34 @@ export function shouldUseBreathWeapon(monster, enemies) {
   if (!monster.rechargeAbilities) return null
 
   const livingEnemies = enemies.filter(e => !e.isDead && !e.isUnconscious)
+  // Count enemies in front position (cone targets)
+  const frontEnemies = livingEnemies.filter(e =>
+    (e.position || getDefaultPosition(e)) === 'front'
+  )
 
   for (const ability of monster.rechargeAbilities) {
     if (ability.available && ability.type === 'area') {
-      // Use if 2+ enemies, or if only enemy has low HP
-      if (livingEnemies.length >= 2) {
-        return ability
-      }
-      // Also use if only 1 enemy but they have decent HP
-      if (livingEnemies.length === 1 && livingEnemies[0].currentHp >= 30) {
-        return ability
+      // For cone shapes, check front line count
+      if (ability.shape === 'cone') {
+        // Use if 2+ enemies in front, or 1 enemy in front with decent HP
+        if (frontEnemies.length >= 2) {
+          return ability
+        }
+        if (frontEnemies.length === 1 && frontEnemies[0].currentHp >= 30) {
+          return ability
+        }
+        // If no front targets but back targets exist, still use on 1 back target
+        if (frontEnemies.length === 0 && livingEnemies.length >= 1) {
+          return ability
+        }
+      } else {
+        // Non-cone area abilities use old logic
+        if (livingEnemies.length >= 2) {
+          return ability
+        }
+        if (livingEnemies.length === 1 && livingEnemies[0].currentHp >= 30) {
+          return ability
+        }
       }
     }
   }

@@ -265,6 +265,11 @@ function FightLog({ results }) {
                                 <>
                                   <span className="spell-damage">{entry.baseDamage} base dmg</span>
                                   {' → '}{entry.targetsHit} targets
+                                  {entry.targetPosition && (
+                                    <span className={`position-indicator position-${entry.targetPosition}`}>
+                                      {' '}({entry.targetPosition} line)
+                                    </span>
+                                  )}
                                 </>
                               ) : entry.effectType === 'control' ? (
                                 <>
@@ -443,6 +448,11 @@ function FightLog({ results }) {
                             <td>
                               <span className="breath-damage">{entry.baseDamage} {entry.damageType}</span>
                               {' → '}{entry.targetsHit} targets
+                              {entry.targetPosition && (
+                                <span className={`position-indicator position-${entry.targetPosition}`}>
+                                  {' '}({entry.targetPosition} line)
+                                </span>
+                              )}
                             </td>
                           </>
                         ) : entry.actionType === 'breathEffect' ? (

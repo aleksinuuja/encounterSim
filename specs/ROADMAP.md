@@ -74,13 +74,21 @@
 - Monster presets: Young/Adult Red Dragon, Hill Giant, Mind Flayer
 - 15 new tests (118 total)
 
-### v0.9 - Data Import `[PLANNED]`
+### v0.9 - AOE Positioning `[IMPLEMENTED]`
+- Abstract positioning system (front/back lines)
+- Position-aware AOE targeting
+- Fireball (sphere): targets chosen position group
+- Breath weapons (cone): targets front line only
+- Position shown in UI and fight log
+- 17 new tests (135 total)
+
+### v0.10 - Data Import `[PLANNED]`
 - Import from D&D Beyond
 - Import from SRD JSON
 - Custom JSON format
 - Character/monster presets library
 
-### v1.0 - Polish `[PLANNED]`
+### v1.1 - Polish `[PLANNED]`
 - Encounter difficulty calculator (CR-based)
 - Save/load encounter configurations
 - Share encounters via URL

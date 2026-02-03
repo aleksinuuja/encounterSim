@@ -118,6 +118,7 @@ function MonsterSetup({ monsters, setMonsters }) {
               <th>Attack</th>
               <th>Damage</th>
               <th>Init</th>
+              <th>Pos</th>
               <th></th>
             </tr>
           </thead>
@@ -135,6 +136,11 @@ function MonsterSetup({ monsters, setMonsters }) {
                 <td>+{c.attackBonus}</td>
                 <td>{c.damage}</td>
                 <td>{c.initiativeBonus >= 0 ? '+' : ''}{c.initiativeBonus}</td>
+                <td>
+                  <span className={`position-badge position-${c.position || 'front'}`}>
+                    {c.position === 'back' ? 'B' : 'F'}
+                  </span>
+                </td>
                 <td className="actions">
                   <button className="btn-icon" onClick={() => handleEdit(c)} title="Edit">
                     ✏️

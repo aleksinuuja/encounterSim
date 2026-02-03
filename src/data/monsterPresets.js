@@ -130,7 +130,8 @@ export const monsterPresets = [
     numAttacks: 1,
     healingDice: null,
     attackType: 'ranged',
-    description: 'Shortbow (ranged)'
+    position: 'back',
+    description: 'Shortbow (ranged, back line)'
   },
   {
     key: 'ghoul',
@@ -179,6 +180,7 @@ export const monsterPresets = [
     initiativeBonus: 2,
     numAttacks: 1,
     healingDice: null,
+    position: 'back',
     // Spellcasting
     spellcastingAbility: 'intelligence',
     spellcastingMod: 4,
@@ -188,7 +190,7 @@ export const monsterPresets = [
     spellSlots: { 1: 4, 2: 3, 3: 2 },
     cantrips: ['fire-bolt', 'toll-the-dead'],
     spells: ['magic-missile', 'fireball', 'hold-person'],
-    description: 'Fire Bolt cantrip, Fireball, Magic Missile'
+    description: 'Fire Bolt cantrip, Fireball, Magic Missile (back line)'
   },
   {
     key: 'priest',
@@ -200,6 +202,7 @@ export const monsterPresets = [
     initiativeBonus: 1,
     numAttacks: 1,
     healingDice: null,
+    position: 'back',
     // Spellcasting
     spellcastingAbility: 'wisdom',
     spellcastingMod: 3,
@@ -209,7 +212,7 @@ export const monsterPresets = [
     spellSlots: { 1: 4, 2: 3 },
     cantrips: ['sacred-flame'],
     spells: ['healing-word', 'hold-person'],
-    description: 'Sacred Flame, Healing Word, Hold Person'
+    description: 'Sacred Flame, Healing Word, Hold Person (back line)'
   },
   {
     key: 'cultist',

@@ -39,6 +39,10 @@ import {
   shouldUseBreathWeapon,
   processRecharges
 } from './monsters.js'
+import {
+  getDefaultPosition,
+  selectConeTargets
+} from './positioning.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -72,7 +76,9 @@ function rollInitiative(combatants) {
     // Deep copy recharge abilities to track availability per combat
     rechargeAbilities: c.rechargeAbilities
       ? c.rechargeAbilities.map(a => ({ ...a, available: true }))
-      : null
+      : null,
+    // v0.9: Position for AOE targeting (front/back)
+    position: c.position || getDefaultPosition(c)
   }))
 
   // Sort by initiative (descending)
@@ -524,7 +530,7 @@ export function runCombat(party, monsters, simulationId) {
       if (combatant.spells || combatant.cantrips) {
         const spellChoice = selectSpellToCast(combatant, allies, enemies)
         if (spellChoice) {
-          const { spell, slotLevel, target: spellTarget, isBonusAction } = spellChoice
+          const { spell, slotLevel, target: spellTarget, isBonusAction, targetPosition } = spellChoice
           const canCast = canCastSpell(combatant, spell.key, slotLevel)
 
           if (canCast.canCast) {
@@ -536,7 +542,7 @@ export function runCombat(party, monsters, simulationId) {
             // Cast the spell based on effect type
             if (spell.effectType === 'damage') {
               if (spell.targetType === 'area') {
-                const areaLogs = castAreaSpell(combatant, spell, Array.isArray(spellTarget) ? spellTarget : [spellTarget], slotLevel, round, turnInRound)
+                const areaLogs = castAreaSpell(combatant, spell, Array.isArray(spellTarget) ? spellTarget : [spellTarget], slotLevel, round, turnInRound, targetPosition)
                 areaLogs.forEach(entry => {
                   log.push(entry)
                   // Check concentration for each damaged target
@@ -622,9 +628,12 @@ export function runCombat(party, monsters, simulationId) {
       }
 
       // v0.8: Check for breath weapon or other recharge abilities
+      // Breath weapons are cones - they hit the front line only
       const breathWeapon = shouldUseBreathWeapon(combatant, enemies)
       if (breathWeapon) {
-        const breathLogs = executeBreathWeapon(combatant, breathWeapon, enemies, round, turnInRound)
+        // Use cone targeting for breath weapons
+        const { targets: breathTargets, position: breathPosition } = selectConeTargets(combatants, combatant.isPlayer)
+        const breathLogs = executeBreathWeapon(combatant, breathWeapon, breathTargets, round, turnInRound, breathPosition)
         breathLogs.forEach(entry => log.push(entry))
 
         // Check if combat ended

@@ -8,7 +8,8 @@ const defaultCombatant = {
   damage: '1d6',
   initiativeBonus: 0,
   numAttacks: 1,
-  healingDice: ''
+  healingDice: '',
+  position: 'front'
 }
 
 function getInitialForm(combatant) {
@@ -17,7 +18,8 @@ function getInitialForm(combatant) {
       ...defaultCombatant,
       ...combatant,
       numAttacks: combatant.numAttacks || 1,
-      healingDice: combatant.healingDice || ''
+      healingDice: combatant.healingDice || '',
+      position: combatant.position || 'front'
     }
   }
   return defaultCombatant
@@ -159,7 +161,7 @@ function CombatantForm({ combatant, onSave, onCancel }) {
         </label>
       </div>
 
-      <div className="form-row">
+      <div className="form-row form-row-grid">
         <label>
           Healing (optional)
           <input
@@ -170,6 +172,18 @@ function CombatantForm({ combatant, onSave, onCancel }) {
             placeholder="e.g., 1d8+3 (leave empty if none)"
           />
           {errors.healingDice && <span className="error">{errors.healingDice}</span>}
+        </label>
+
+        <label>
+          Position
+          <select
+            name="position"
+            value={form.position}
+            onChange={handleChange}
+          >
+            <option value="front">Front (melee)</option>
+            <option value="back">Back (ranged)</option>
+          </select>
         </label>
       </div>
 

@@ -205,6 +205,7 @@ export const SPELLS = {
     targetType: 'area',
     range: 150,
     areaRadius: 20,
+    aoeShape: 'sphere', // Hits chosen position group (front or back)
     effectType: 'damage',
     damageType: 'fire',
     damageDice: '8d6',
