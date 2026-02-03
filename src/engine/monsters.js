@@ -6,6 +6,7 @@
 import { rollD20, rollDice } from './dice.js'
 import { applyCondition } from './conditions.js'
 import { getDefaultPosition } from './positioning.js'
+import { applyDamage, shouldUseLegendaryResistance, useLegendaryResistance } from './damage.js'
 
 /**
  * Roll to recharge an ability
@@ -77,11 +78,18 @@ export function executeMultiattack(attacker, targets, round, turn) {
       logEntry.targetHpBefore = target.currentHp
 
       const { total: baseDamage } = rollDice(attack.damage)
-      const damage = isCritical ? baseDamage * 2 : baseDamage
+      const rawDamage = isCritical ? baseDamage * 2 : baseDamage
 
-      logEntry.damageRoll = damage
+      // Apply damage with immunity/resistance
+      const { finalDamage, immune, resistant } = applyDamage(target, rawDamage, attack.damageType)
+
+      logEntry.damageRoll = finalDamage
+      logEntry.rawDamage = rawDamage
       logEntry.damageType = attack.damageType
-      target.currentHp = Math.max(0, target.currentHp - damage)
+      logEntry.damageImmune = immune
+      logEntry.damageResisted = resistant
+
+      target.currentHp = Math.max(0, target.currentHp - finalDamage)
       logEntry.targetHpAfter = target.currentHp
 
       if (target.currentHp <= 0) {
@@ -144,16 +152,27 @@ export function executeBreathWeapon(monster, ability, targets, round, turn, targ
     const saveRoll = rollD20()
     const saveBonus = target[ability.saveAbility + 'Save'] || 0
     const saveTotal = saveRoll + saveBonus
-    const saved = saveTotal >= ability.saveDC
+    let saved = saveTotal >= ability.saveDC
 
-    const damage = saved && ability.saveEffect === 'half'
+    // Check for legendary resistance on failed save
+    let usedLegendaryResistance = false
+    if (!saved && shouldUseLegendaryResistance(target, ability.onFail || null, baseDamage)) {
+      useLegendaryResistance(target)
+      saved = true
+      usedLegendaryResistance = true
+    }
+
+    const rawDamage = saved && ability.saveEffect === 'half'
       ? Math.floor(baseDamage / 2)
       : saved && ability.saveEffect === 'none'
         ? 0
         : baseDamage
 
+    // Apply damage with immunity/resistance
+    const { finalDamage, immune, resistant } = applyDamage(target, rawDamage, ability.damageType)
+
     const hpBefore = target.currentHp
-    target.currentHp = Math.max(0, target.currentHp - damage)
+    target.currentHp = Math.max(0, target.currentHp - finalDamage)
 
     const targetLog = {
       round,
@@ -167,8 +186,13 @@ export function executeBreathWeapon(monster, ability, targets, round, turn, targ
       saveDC: ability.saveDC,
       saveAbility: ability.saveAbility,
       savePassed: saved,
-      damageRoll: damage,
+      usedLegendaryResistance,
+      legendaryResistancesLeft: target.currentLegendaryResistances || 0,
+      damageRoll: finalDamage,
+      rawDamage,
       damageType: ability.damageType,
+      damageImmune: immune,
+      damageResisted: resistant,
       targetHpBefore: hpBefore,
       targetHpAfter: target.currentHp
     }
@@ -274,11 +298,23 @@ export function executeLegendaryAction(monster, ability, targets, round, turn) {
       const saveRoll = rollD20()
       const saveBonus = target[ability.saveAbility + 'Save'] || 0
       const saveTotal = saveRoll + saveBonus
-      const saved = saveTotal >= ability.saveDC
+      let saved = saveTotal >= ability.saveDC
 
-      const damage = saved ? 0 : baseDamage
+      // Check for legendary resistance on failed save
+      let usedLegendaryResistance = false
+      if (!saved && shouldUseLegendaryResistance(target, ability.onFail || null, baseDamage)) {
+        useLegendaryResistance(target)
+        saved = true
+        usedLegendaryResistance = true
+      }
+
+      const rawDamage = saved ? 0 : baseDamage
+      // Apply damage with immunity/resistance (damage type from ability)
+      const damageType = ability.damageType || 'bludgeoning'
+      const { finalDamage, immune, resistant } = applyDamage(target, rawDamage, damageType)
+
       const hpBefore = target.currentHp
-      target.currentHp = Math.max(0, target.currentHp - damage)
+      target.currentHp = Math.max(0, target.currentHp - finalDamage)
 
       const targetLog = {
         round,
@@ -291,7 +327,13 @@ export function executeLegendaryAction(monster, ability, targets, round, turn) {
         saveTotal,
         saveDC: ability.saveDC,
         savePassed: saved,
-        damageRoll: damage,
+        usedLegendaryResistance,
+        legendaryResistancesLeft: target.currentLegendaryResistances || 0,
+        damageRoll: finalDamage,
+        rawDamage,
+        damageType,
+        damageImmune: immune,
+        damageResisted: resistant,
         targetHpBefore: hpBefore,
         targetHpAfter: target.currentHp
       }
@@ -431,4 +473,124 @@ export function processRecharges(monster, round, turn) {
   }
 
   return logs
+}
+
+/**
+ * Execute Frightful Presence ability
+ * Forces WIS saves or become frightened
+ * @param {object} monster - The monster using frightful presence
+ * @param {object[]} targets - All potential targets (enemies in range)
+ * @param {number} round - Current round
+ * @param {number} turn - Current turn
+ * @returns {object[]} - Array of log entries
+ */
+export function executeFrightfulPresence(monster, targets, round, turn) {
+  const logs = []
+  const ability = monster.frightfulPresence
+
+  if (!ability || !ability.available) return logs
+
+  const livingTargets = targets.filter(t => !t.isDead && !t.isUnconscious)
+  if (livingTargets.length === 0) return logs
+
+  // Main log entry
+  logs.push({
+    round,
+    turn,
+    actorName: monster.name,
+    actionType: 'frightfulPresence',
+    abilityName: 'Frightful Presence',
+    saveDC: ability.saveDC,
+    targetsCount: livingTargets.length
+  })
+
+  // Mark as used (only usable once per combat in our simplified model)
+  ability.available = false
+
+  // Each target makes a WIS save
+  for (const target of livingTargets) {
+    // Skip targets already immune (already saved once)
+    if (target.frightfulPresenceImmune?.[monster.name]) {
+      logs.push({
+        round,
+        turn,
+        actorName: monster.name,
+        targetName: target.name,
+        actionType: 'frightfulPresenceEffect',
+        immune: true
+      })
+      continue
+    }
+
+    const saveRoll = rollD20()
+    const saveBonus = target.wisdomSave || 0
+    const saveTotal = saveRoll + saveBonus
+    let saved = saveTotal >= ability.saveDC
+
+    // Check for legendary resistance
+    let usedLegendaryResistance = false
+    if (!saved && shouldUseLegendaryResistance(target, 'frightened', 0)) {
+      useLegendaryResistance(target)
+      saved = true
+      usedLegendaryResistance = true
+    }
+
+    const targetLog = {
+      round,
+      turn,
+      actorName: monster.name,
+      targetName: target.name,
+      actionType: 'frightfulPresenceEffect',
+      saveRoll,
+      saveTotal,
+      saveDC: ability.saveDC,
+      savePassed: saved,
+      usedLegendaryResistance,
+      legendaryResistancesLeft: target.currentLegendaryResistances || 0
+    }
+
+    if (saved) {
+      // On save, target is immune for 24 hours (rest of combat)
+      if (!target.frightfulPresenceImmune) {
+        target.frightfulPresenceImmune = {}
+      }
+      target.frightfulPresenceImmune[monster.name] = true
+    } else {
+      // On fail, apply frightened
+      const result = applyCondition(target, {
+        type: 'frightened',
+        duration: ability.duration || 10,
+        source: monster.name,
+        saveEndOfTurn: {
+          ability: 'wisdom',
+          dc: ability.saveDC
+        }
+      })
+
+      if (result === 'applied') {
+        targetLog.conditionApplied = 'frightened'
+      } else if (result === 'immune') {
+        targetLog.conditionImmune = 'frightened'
+      }
+    }
+
+    logs.push(targetLog)
+  }
+
+  return logs
+}
+
+/**
+ * Check if monster should use Frightful Presence
+ * @param {object} monster - The monster
+ * @param {object[]} enemies - Enemy combatants
+ * @returns {boolean} - Whether to use frightful presence
+ */
+export function shouldUseFrightfulPresence(monster, enemies) {
+  if (!monster.frightfulPresence?.available) return false
+
+  const livingEnemies = enemies.filter(e => !e.isDead && !e.isUnconscious)
+
+  // Use against 2+ enemies, or always at start of combat
+  return livingEnemies.length >= 2
 }

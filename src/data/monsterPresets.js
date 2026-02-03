@@ -234,7 +234,8 @@ export const monsterPresets = [
     spells: [],
     description: 'Sacred Flame cantrip'
   },
-  // === ADVANCED MONSTERS (v0.8) ===
+  // === DRAGONS (v0.10) ===
+  // Young Dragons - CR 7-10, no legendary features
   {
     key: 'young-red-dragon',
     name: 'Young Red Dragon',
@@ -248,13 +249,12 @@ export const monsterPresets = [
     dexteritySave: 4,
     constitutionSave: 9,
     wisdomSave: 4,
-    // Multiattack: bite + 2 claws
+    damageImmunities: ['fire'],
     multiattack: [
       { type: 'bite', attackBonus: 10, damage: '2d10+6', damageType: 'piercing' },
       { type: 'claw', attackBonus: 10, damage: '2d6+6', damageType: 'slashing' },
       { type: 'claw', attackBonus: 10, damage: '2d6+6', damageType: 'slashing' }
     ],
-    // Fire Breath (Recharge 5-6)
     rechargeAbilities: [
       {
         name: 'Fire Breath',
@@ -271,8 +271,158 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened'],
-    description: 'Fire breath (16d6), multiattack (bite + 2 claws)'
+    description: 'Fire immune, breath (16d6), multiattack'
   },
+  {
+    key: 'young-blue-dragon',
+    name: 'Young Blue Dragon',
+    maxHp: 152,
+    armorClass: 18,
+    attackBonus: 9,
+    damage: '2d10+5',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 4,
+    constitutionSave: 8,
+    wisdomSave: 4,
+    damageImmunities: ['lightning'],
+    multiattack: [
+      { type: 'bite', attackBonus: 9, damage: '2d10+5', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 9, damage: '2d6+5', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 9, damage: '2d6+5', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Lightning Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'line',
+        size: 60,
+        saveDC: 16,
+        saveAbility: 'dexterity',
+        damage: '10d10',
+        damageType: 'lightning',
+        saveEffect: 'half'
+      }
+    ],
+    conditionImmunities: ['frightened'],
+    description: 'Lightning immune, breath (10d10), multiattack'
+  },
+  {
+    key: 'young-green-dragon',
+    name: 'Young Green Dragon',
+    maxHp: 136,
+    armorClass: 18,
+    attackBonus: 7,
+    damage: '2d10+4',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 4,
+    constitutionSave: 7,
+    wisdomSave: 3,
+    damageImmunities: ['poison'],
+    conditionImmunities: ['frightened', 'poisoned'],
+    multiattack: [
+      { type: 'bite', attackBonus: 7, damage: '2d10+4', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Poison Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 30,
+        saveDC: 14,
+        saveAbility: 'constitution',
+        damage: '12d6',
+        damageType: 'poison',
+        saveEffect: 'half'
+      }
+    ],
+    description: 'Poison immune, breath (12d6), multiattack'
+  },
+  {
+    key: 'young-white-dragon',
+    name: 'Young White Dragon',
+    maxHp: 133,
+    armorClass: 17,
+    attackBonus: 7,
+    damage: '2d10+4',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 3,
+    constitutionSave: 7,
+    wisdomSave: 2,
+    damageImmunities: ['cold'],
+    multiattack: [
+      { type: 'bite', attackBonus: 7, damage: '2d10+4', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Cold Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 30,
+        saveDC: 15,
+        saveAbility: 'constitution',
+        damage: '10d8',
+        damageType: 'cold',
+        saveEffect: 'half'
+      }
+    ],
+    conditionImmunities: ['frightened'],
+    description: 'Cold immune, breath (10d8), multiattack'
+  },
+  {
+    key: 'young-black-dragon',
+    name: 'Young Black Dragon',
+    maxHp: 127,
+    armorClass: 18,
+    attackBonus: 7,
+    damage: '2d10+4',
+    initiativeBonus: 3,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 5,
+    constitutionSave: 6,
+    wisdomSave: 2,
+    damageImmunities: ['acid'],
+    multiattack: [
+      { type: 'bite', attackBonus: 7, damage: '2d10+4', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 7, damage: '2d6+4', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Acid Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'line',
+        size: 30,
+        saveDC: 14,
+        saveAbility: 'dexterity',
+        damage: '11d8',
+        damageType: 'acid',
+        saveEffect: 'half'
+      }
+    ],
+    conditionImmunities: ['frightened'],
+    description: 'Acid immune, breath (11d8), multiattack'
+  },
+
+  // Adult Dragons - CR 13-17, with legendary features
   {
     key: 'adult-red-dragon',
     name: 'Adult Red Dragon',
@@ -286,13 +436,13 @@ export const monsterPresets = [
     dexteritySave: 6,
     constitutionSave: 13,
     wisdomSave: 7,
-    // Multiattack: bite + 2 claws
+    damageImmunities: ['fire'],
+    legendaryResistances: 3,
     multiattack: [
       { type: 'bite', attackBonus: 14, damage: '2d10+8', damageType: 'piercing' },
       { type: 'claw', attackBonus: 14, damage: '2d6+8', damageType: 'slashing' },
       { type: 'claw', attackBonus: 14, damage: '2d6+8', damageType: 'slashing' }
     ],
-    // Fire Breath (Recharge 5-6)
     rechargeAbilities: [
       {
         name: 'Fire Breath',
@@ -308,7 +458,10 @@ export const monsterPresets = [
         saveEffect: 'half'
       }
     ],
-    // Legendary Actions (3/round)
+    frightfulPresence: {
+      saveDC: 19,
+      duration: 10
+    },
     legendaryActions: 3,
     legendaryAbilities: [
       {
@@ -331,8 +484,262 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened', 'charmed'],
-    description: 'Legendary (3 actions), fire breath (18d6), multiattack'
+    description: 'Legendary (3 res, 3 act), fire immune, frightful presence'
   },
+  {
+    key: 'adult-blue-dragon',
+    name: 'Adult Blue Dragon',
+    maxHp: 225,
+    armorClass: 19,
+    attackBonus: 12,
+    damage: '2d10+7',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 5,
+    constitutionSave: 11,
+    wisdomSave: 7,
+    damageImmunities: ['lightning'],
+    legendaryResistances: 3,
+    multiattack: [
+      { type: 'bite', attackBonus: 12, damage: '2d10+7', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 12, damage: '2d6+7', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 12, damage: '2d6+7', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Lightning Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'line',
+        size: 90,
+        saveDC: 19,
+        saveAbility: 'dexterity',
+        damage: '12d10',
+        damageType: 'lightning',
+        saveEffect: 'half'
+      }
+    ],
+    frightfulPresence: {
+      saveDC: 17,
+      duration: 10
+    },
+    legendaryActions: 3,
+    legendaryAbilities: [
+      {
+        name: 'Tail Attack',
+        cost: 1,
+        type: 'attack',
+        attackBonus: 12,
+        damage: '2d8+7',
+        damageType: 'bludgeoning'
+      },
+      {
+        name: 'Wing Attack',
+        cost: 2,
+        type: 'area',
+        saveDC: 20,
+        saveAbility: 'dexterity',
+        damage: '2d6+7',
+        damageType: 'bludgeoning',
+        onFail: 'prone'
+      }
+    ],
+    conditionImmunities: ['frightened', 'charmed'],
+    description: 'Legendary (3 res, 3 act), lightning immune, frightful presence'
+  },
+  {
+    key: 'adult-green-dragon',
+    name: 'Adult Green Dragon',
+    maxHp: 207,
+    armorClass: 19,
+    attackBonus: 11,
+    damage: '2d10+6',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 6,
+    constitutionSave: 10,
+    wisdomSave: 7,
+    damageImmunities: ['poison'],
+    conditionImmunities: ['frightened', 'charmed', 'poisoned'],
+    legendaryResistances: 3,
+    multiattack: [
+      { type: 'bite', attackBonus: 11, damage: '2d10+6', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Poison Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 60,
+        saveDC: 18,
+        saveAbility: 'constitution',
+        damage: '16d6',
+        damageType: 'poison',
+        saveEffect: 'half'
+      }
+    ],
+    frightfulPresence: {
+      saveDC: 16,
+      duration: 10
+    },
+    legendaryActions: 3,
+    legendaryAbilities: [
+      {
+        name: 'Tail Attack',
+        cost: 1,
+        type: 'attack',
+        attackBonus: 11,
+        damage: '2d8+6',
+        damageType: 'bludgeoning'
+      },
+      {
+        name: 'Wing Attack',
+        cost: 2,
+        type: 'area',
+        saveDC: 19,
+        saveAbility: 'dexterity',
+        damage: '2d6+6',
+        damageType: 'bludgeoning',
+        onFail: 'prone'
+      }
+    ],
+    description: 'Legendary (3 res, 3 act), poison immune, frightful presence'
+  },
+  {
+    key: 'adult-white-dragon',
+    name: 'Adult White Dragon',
+    maxHp: 200,
+    armorClass: 18,
+    attackBonus: 11,
+    damage: '2d10+6',
+    initiativeBonus: 2,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 5,
+    constitutionSave: 10,
+    wisdomSave: 5,
+    damageImmunities: ['cold'],
+    legendaryResistances: 3,
+    multiattack: [
+      { type: 'bite', attackBonus: 11, damage: '2d10+6', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Cold Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'cone',
+        size: 60,
+        saveDC: 19,
+        saveAbility: 'constitution',
+        damage: '12d8',
+        damageType: 'cold',
+        saveEffect: 'half'
+      }
+    ],
+    frightfulPresence: {
+      saveDC: 14,
+      duration: 10
+    },
+    legendaryActions: 3,
+    legendaryAbilities: [
+      {
+        name: 'Tail Attack',
+        cost: 1,
+        type: 'attack',
+        attackBonus: 11,
+        damage: '2d8+6',
+        damageType: 'bludgeoning'
+      },
+      {
+        name: 'Wing Attack',
+        cost: 2,
+        type: 'area',
+        saveDC: 19,
+        saveAbility: 'dexterity',
+        damage: '2d6+6',
+        damageType: 'bludgeoning',
+        onFail: 'prone'
+      }
+    ],
+    conditionImmunities: ['frightened', 'charmed'],
+    description: 'Legendary (3 res, 3 act), cold immune, frightful presence'
+  },
+  {
+    key: 'adult-black-dragon',
+    name: 'Adult Black Dragon',
+    maxHp: 195,
+    armorClass: 19,
+    attackBonus: 11,
+    damage: '2d10+6',
+    initiativeBonus: 3,
+    numAttacks: 1,
+    healingDice: null,
+    dexteritySave: 7,
+    constitutionSave: 9,
+    wisdomSave: 5,
+    damageImmunities: ['acid'],
+    legendaryResistances: 3,
+    multiattack: [
+      { type: 'bite', attackBonus: 11, damage: '2d10+6', damageType: 'piercing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' },
+      { type: 'claw', attackBonus: 11, damage: '2d6+6', damageType: 'slashing' }
+    ],
+    rechargeAbilities: [
+      {
+        name: 'Acid Breath',
+        rechargeMin: 5,
+        available: true,
+        type: 'area',
+        shape: 'line',
+        size: 60,
+        saveDC: 18,
+        saveAbility: 'dexterity',
+        damage: '13d8',
+        damageType: 'acid',
+        saveEffect: 'half'
+      }
+    ],
+    frightfulPresence: {
+      saveDC: 16,
+      duration: 10
+    },
+    legendaryActions: 3,
+    legendaryAbilities: [
+      {
+        name: 'Tail Attack',
+        cost: 1,
+        type: 'attack',
+        attackBonus: 11,
+        damage: '2d8+6',
+        damageType: 'bludgeoning'
+      },
+      {
+        name: 'Wing Attack',
+        cost: 2,
+        type: 'area',
+        saveDC: 19,
+        saveAbility: 'dexterity',
+        damage: '2d6+6',
+        damageType: 'bludgeoning',
+        onFail: 'prone'
+      }
+    ],
+    conditionImmunities: ['frightened', 'charmed'],
+    description: 'Legendary (3 res, 3 act), acid immune, frightful presence'
+  },
+
+  // === OTHER ADVANCED MONSTERS ===
   {
     key: 'hill-giant',
     name: 'Hill Giant',

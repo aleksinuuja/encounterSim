@@ -37,12 +37,19 @@ import {
   executeLegendaryAction,
   selectLegendaryAction,
   shouldUseBreathWeapon,
-  processRecharges
+  processRecharges,
+  executeFrightfulPresence,
+  shouldUseFrightfulPresence
 } from './monsters.js'
 import {
   getDefaultPosition,
   selectConeTargets
 } from './positioning.js'
+import {
+  applyDamage,
+  shouldUseLegendaryResistance,
+  useLegendaryResistance
+} from './damage.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -73,9 +80,15 @@ function rollInitiative(combatants) {
     spiritualWeapon: null,
     // v0.8: Advanced monster abilities
     currentLegendaryActions: c.legendaryActions || 0,
+    // v0.10: Legendary resistance (auto-succeed failed saves)
+    currentLegendaryResistances: c.legendaryResistances || 0,
     // Deep copy recharge abilities to track availability per combat
     rechargeAbilities: c.rechargeAbilities
       ? c.rechargeAbilities.map(a => ({ ...a, available: true }))
+      : null,
+    // v0.10: Frightful Presence (deep copy for availability tracking)
+    frightfulPresence: c.frightfulPresence
+      ? { ...c.frightfulPresence, available: true }
       : null,
     // v0.9: Position for AOE targeting (front/back)
     position: c.position || getDefaultPosition(c)
@@ -608,6 +621,15 @@ export function runCombat(party, monsters, simulationId) {
       if (combatant.rechargeAbilities) {
         const rechargeLogs = processRecharges(combatant, round, turnInRound)
         rechargeLogs.forEach(entry => log.push(entry))
+      }
+
+      // v0.10: Use Frightful Presence at start of combat
+      if (shouldUseFrightfulPresence(combatant, enemies)) {
+        const fpLogs = executeFrightfulPresence(combatant, enemies, round, turnInRound)
+        fpLogs.forEach(entry => log.push(entry))
+        // Frightful Presence takes an action, so end turn
+        processEndOfTurn(combatant, round, turnInRound, log)
+        continue
       }
 
       // Check if combatant should heal instead of attack

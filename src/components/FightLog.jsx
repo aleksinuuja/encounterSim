@@ -108,6 +108,12 @@ function FightLog({ results }) {
     if (entry.actionType === 'recharge') {
       return entry.recharged ? 'log-recharge-success' : 'log-recharge-fail'
     }
+    // v0.10: Frightful Presence
+    if (entry.actionType === 'frightfulPresence') return 'log-frightful-presence'
+    if (entry.actionType === 'frightfulPresenceEffect') {
+      if (entry.immune) return 'log-frightful-immune'
+      return entry.savePassed ? 'log-spell-saved' : 'log-frightful-hit'
+    }
     if (entry.targetDied) return 'log-death'
     if (entry.targetDowned) return 'log-death'
     if (entry.hit) return 'log-hit'
@@ -443,7 +449,18 @@ function FightLog({ results }) {
                               <span className="attack-type">{entry.attackType}</span>
                               {entry.hit ? (
                                 <>
-                                  {' '}<span className="damage">{entry.damageRoll} {entry.damageType}</span>
+                                  {entry.damageImmune ? (
+                                    <span className="damage-immune"> IMMUNE to {entry.damageType}</span>
+                                  ) : entry.damageResisted ? (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} {entry.damageType}</span>
+                                      <span className="damage-resisted"> (resisted)</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} {entry.damageType}</span>
+                                    </>
+                                  )}
                                   {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
                                   {entry.targetDied && <span className="died"> DIED</span>}
                                 </>
@@ -476,9 +493,58 @@ function FightLog({ results }) {
                               <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
                                 {entry.saveAbility?.toUpperCase()} {entry.saveTotal} vs DC {entry.saveDC}
                               </span>
-                              {' '}<span className="breath-damage">{entry.damageRoll} dmg</span>
+                              {entry.usedLegendaryResistance && (
+                                <span className="legendary-resistance"> LEG.RES ({entry.legendaryResistancesLeft} left)</span>
+                              )}
+                              {entry.damageImmune ? (
+                                <span className="damage-immune"> IMMUNE</span>
+                              ) : entry.damageResisted ? (
+                                <>
+                                  {' '}<span className="breath-damage">{entry.damageRoll} dmg</span>
+                                  <span className="damage-resisted"> (resisted)</span>
+                                </>
+                              ) : (
+                                <>
+                                  {' '}<span className="breath-damage">{entry.damageRoll} dmg</span>
+                                </>
+                              )}
                               {' '}({entry.targetHpBefore} → {entry.targetHpAfter})
                               {entry.targetDied && <span className="died"> DIED</span>}
+                            </td>
+                          </>
+                        ) : entry.actionType === 'frightfulPresence' ? (
+                          <>
+                            <td colSpan="2" className="frightful-presence-label">
+                              FRIGHTFUL PRESENCE
+                            </td>
+                            <td>
+                              <span className="frightful-presence">DC {entry.saveDC} WIS</span>
+                              {' → '}{entry.targetsCount} targets
+                            </td>
+                          </>
+                        ) : entry.actionType === 'frightfulPresenceEffect' ? (
+                          <>
+                            <td colSpan="2" className="frightful-effect-label">
+                              ↳ Frightful Presence
+                            </td>
+                            <td>
+                              {entry.immune ? (
+                                <span className="frightful-immune">Already immune</span>
+                              ) : (
+                                <>
+                                  <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
+                                    WIS {entry.saveTotal} vs DC {entry.saveDC}
+                                  </span>
+                                  {entry.usedLegendaryResistance && (
+                                    <span className="legendary-resistance"> LEG.RES ({entry.legendaryResistancesLeft} left)</span>
+                                  )}
+                                  {entry.savePassed ? (
+                                    <span className="frightful-saved"> Resisted (now immune)</span>
+                                  ) : (
+                                    <span className="condition-applied"> +FRIGHTENED</span>
+                                  )}
+                                </>
+                              )}
                             </td>
                           </>
                         ) : entry.actionType === 'legendaryAction' ? (
@@ -510,9 +576,23 @@ function FightLog({ results }) {
                               <span className={entry.savePassed ? 'save-passed' : 'save-failed'}>
                                 {entry.saveTotal} vs DC {entry.saveDC}
                               </span>
+                              {entry.usedLegendaryResistance && (
+                                <span className="legendary-resistance"> LEG.RES ({entry.legendaryResistancesLeft} left)</span>
+                              )}
                               {!entry.savePassed && (
                                 <>
-                                  {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                  {entry.damageImmune ? (
+                                    <span className="damage-immune"> IMMUNE</span>
+                                  ) : entry.damageResisted ? (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                      <span className="damage-resisted"> (resisted)</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {' '}<span className="damage">{entry.damageRoll} dmg</span>
+                                    </>
+                                  )}
                                   {entry.conditionApplied && <span className="condition-applied"> +{entry.conditionApplied.toUpperCase()}</span>}
                                 </>
                               )}

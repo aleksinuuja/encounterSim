@@ -1132,3 +1132,65 @@
 .recharge-fail {
   color: #888;
 }
+
+/* v0.10: Legendary Resistance, Damage Immunity, Frightful Presence */
+.legendary-resistance {
+  color: #9c27b0;
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+.damage-immune {
+  color: #1565c0;
+  font-weight: bold;
+  font-style: italic;
+}
+
+.damage-resisted {
+  color: #7b1fa2;
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+/* Frightful Presence Styles */
+.log-table tr.log-frightful-presence {
+  background: #4a148c;
+  color: #f3e5f5;
+  font-weight: 600;
+}
+
+.log-table tr.log-frightful-hit {
+  background: #7b1fa2;
+  color: #ffffff;
+}
+
+.log-table tr.log-frightful-immune {
+  background: #f3e5f5;
+}
+
+.frightful-presence-label {
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+
+.frightful-effect-label {
+  color: #ce93d8;
+  font-style: italic;
+  text-align: center;
+}
+
+.frightful-presence {
+  color: #f3e5f5;
+  font-weight: 600;
+}
+
+.frightful-saved {
+  color: #a5d6a7;
+  font-weight: 600;
+}
+
+.frightful-immune {
+  color: #7b1fa2;
+  font-style: italic;
+}
