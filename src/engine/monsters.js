@@ -7,6 +7,7 @@ import { rollD20, rollDice } from './dice.js'
 import { applyCondition } from './conditions.js'
 import { getDefaultPosition } from './positioning.js'
 import { applyDamage, shouldUseLegendaryResistance, useLegendaryResistance } from './damage.js'
+import { selectTacticalTarget, calculateThreatScore } from './targeting.js'
 
 /**
  * Roll to recharge an ability
@@ -232,7 +233,21 @@ export function executeLegendaryAction(monster, ability, targets, round, turn) {
   monster.currentLegendaryActions -= ability.cost
 
   if (ability.type === 'attack') {
-    const target = livingTargets[0]
+    // Tactical AI: pick high-threat target
+    // Tail attacks have reach and can hit backline
+    const canReachBack = ability.reach || false
+    let target
+    if (monster.tacticalAI) {
+      target = selectTacticalTarget(
+        livingTargets.map(t => ({ ...t, isPlayer: true })), // Treat as enemies
+        false, // Monster is not player
+        { canReachBackline: canReachBack }
+      )
+      // selectTacticalTarget returns null-safe, fallback to first
+      if (!target) target = livingTargets[0]
+    } else {
+      target = livingTargets[0]
+    }
     const attackRoll = rollD20()
     const totalAttack = attackRoll + ability.attackBonus
 

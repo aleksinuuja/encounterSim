@@ -271,6 +271,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened'],
+    tacticalAI: true,
     description: 'Fire immune, breath (16d6), multiattack'
   },
   {
@@ -308,6 +309,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened'],
+    tacticalAI: true,
     description: 'Lightning immune, breath (10d10), multiattack'
   },
   {
@@ -345,6 +347,7 @@ export const monsterPresets = [
         saveEffect: 'half'
       }
     ],
+    tacticalAI: true,
     description: 'Poison immune, breath (12d6), multiattack'
   },
   {
@@ -382,6 +385,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened'],
+    tacticalAI: true,
     description: 'Cold immune, breath (10d8), multiattack'
   },
   {
@@ -419,6 +423,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened'],
+    tacticalAI: true,
     description: 'Acid immune, breath (11d8), multiattack'
   },
 
@@ -470,7 +475,8 @@ export const monsterPresets = [
         type: 'attack',
         attackBonus: 14,
         damage: '2d8+8',
-        damageType: 'bludgeoning'
+        damageType: 'bludgeoning',
+        reach: true
       },
       {
         name: 'Wing Attack',
@@ -485,6 +491,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened', 'charmed'],
+    tacticalAI: true,
     description: 'Legendary (3 res, 3 act), fire immune, frightful presence'
   },
   {
@@ -534,7 +541,8 @@ export const monsterPresets = [
         type: 'attack',
         attackBonus: 12,
         damage: '2d8+7',
-        damageType: 'bludgeoning'
+        damageType: 'bludgeoning',
+        reach: true
       },
       {
         name: 'Wing Attack',
@@ -549,6 +557,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened', 'charmed'],
+    tacticalAI: true,
     description: 'Legendary (3 res, 3 act), lightning immune, frightful presence'
   },
   {
@@ -599,7 +608,8 @@ export const monsterPresets = [
         type: 'attack',
         attackBonus: 11,
         damage: '2d8+6',
-        damageType: 'bludgeoning'
+        damageType: 'bludgeoning',
+        reach: true
       },
       {
         name: 'Wing Attack',
@@ -613,6 +623,7 @@ export const monsterPresets = [
         onFail: 'prone'
       }
     ],
+    tacticalAI: true,
     description: 'Legendary (3 res, 3 act), poison immune, frightful presence'
   },
   {
@@ -662,7 +673,8 @@ export const monsterPresets = [
         type: 'attack',
         attackBonus: 11,
         damage: '2d8+6',
-        damageType: 'bludgeoning'
+        damageType: 'bludgeoning',
+        reach: true
       },
       {
         name: 'Wing Attack',
@@ -677,6 +689,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened', 'charmed'],
+    tacticalAI: true,
     description: 'Legendary (3 res, 3 act), cold immune, frightful presence'
   },
   {
@@ -726,7 +739,8 @@ export const monsterPresets = [
         type: 'attack',
         attackBonus: 11,
         damage: '2d8+6',
-        damageType: 'bludgeoning'
+        damageType: 'bludgeoning',
+        reach: true
       },
       {
         name: 'Wing Attack',
@@ -741,6 +755,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['frightened', 'charmed'],
+    tacticalAI: true,
     description: 'Legendary (3 res, 3 act), acid immune, frightful presence'
   },
 
@@ -794,6 +809,7 @@ export const monsterPresets = [
       }
     ],
     conditionImmunities: ['charmed'],
+    tacticalAI: true,
     description: 'Mind blast (4d8+4 psychic, stun), tentacles'
   }
 ]

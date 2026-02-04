@@ -3,7 +3,7 @@
  */
 
 import { rollD20, rollD20WithModifier, rollDamage, rollDice } from './dice.js'
-import { selectTarget, selectHealTarget } from './targeting.js'
+import { selectTarget, selectHealTarget, selectTacticalTarget } from './targeting.js'
 import {
   canAct,
   getCombinedModifier,
@@ -702,7 +702,10 @@ export function runCombat(party, monsters, simulationId) {
         const numAttacks = combatant.numAttacks || 1
         for (let attackNum = 0; attackNum < numAttacks; attackNum++) {
           // Find a target for this attack
-          const target = selectTarget(combatants, combatant.isPlayer)
+          // Tactical AI (intelligent monsters) prioritizes high-threat targets
+          const target = combatant.tacticalAI
+            ? selectTacticalTarget(combatants, combatant.isPlayer, { canReachBackline: false })
+            : selectTarget(combatants, combatant.isPlayer)
           if (!target) {
             // Combat is over
             break
@@ -736,7 +739,9 @@ export function runCombat(party, monsters, simulationId) {
         const bonusAction = selectBonusAction(combatant, allies, enemies)
         if (bonusAction) {
           let baLog = null
-          const baTarget = bonusAction.target || selectTarget(combatants, combatant.isPlayer)
+          const baTarget = bonusAction.target || (combatant.tacticalAI
+            ? selectTacticalTarget(combatants, combatant.isPlayer, { canReachBackline: false })
+            : selectTarget(combatants, combatant.isPlayer))
 
           if (bonusAction.type === 'spiritualWeapon' && baTarget) {
             baLog = executeSpiritualWeaponAttack(combatant, baTarget, round, turnInRound)
