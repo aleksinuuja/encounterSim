@@ -63,6 +63,7 @@ function PartySetup({ party, setParty }) {
           <thead>
             <tr>
               <th>Name</th>
+              <th>Class/Lvl</th>
               <th>HP</th>
               <th>AC</th>
               <th>Attack</th>
@@ -76,6 +77,7 @@ function PartySetup({ party, setParty }) {
             {party.map(c => (
               <tr key={c.id}>
                 <td>{c.name}</td>
+                <td>{c.class ? `${c.class.charAt(0).toUpperCase() + c.class.slice(1)} ${c.level || 1}` : '—'}</td>
                 <td>{c.maxHp}</td>
                 <td>{c.armorClass}</td>
                 <td>+{c.attackBonus}</td>

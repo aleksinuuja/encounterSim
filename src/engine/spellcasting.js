@@ -97,35 +97,77 @@ export function castDamageSpell(caster, spell, target, slotLevel, round, turn) {
 
   // Spell attack roll
   if (spell.attackRoll) {
-    const attackRoll = rollD20()
-    const totalAttack = attackRoll + (caster.spellAttackBonus || 0)
-    logEntry.attackRoll = attackRoll
-    logEntry.totalAttack = totalAttack
-    logEntry.targetAC = target.armorClass
+    // Handle multi-ray spells (like Scorching Ray)
+    const numRays = spell.rays
+      ? spell.rays + (spell.upcastRays ? (slotLevel - spell.level) * spell.upcastRays : 0)
+      : 1
 
-    if (attackRoll === 1) {
-      logEntry.hit = false
-      return logEntry
+    if (numRays > 1) {
+      // Multi-ray spell: roll each ray separately
+      let totalDamage = 0
+      let hitsCount = 0
+      const rayResults = []
+
+      logEntry.targetAC = target.armorClass
+      logEntry.rays = numRays
+
+      for (let i = 0; i < numRays; i++) {
+        const attackRoll = rollD20()
+        const totalAttack = attackRoll + (caster.spellAttackBonus || 0)
+        const isCritical = attackRoll === 20
+        const isMiss = attackRoll === 1 || totalAttack < target.armorClass
+        const hit = !isMiss
+
+        if (hit) {
+          hitsCount++
+          const { total: damage } = rollDice(damageDice)
+          const rayDamage = isCritical ? damage * 2 : damage
+          totalDamage += rayDamage
+          rayResults.push({ attackRoll, totalAttack, hit: true, isCritical, damage: rayDamage })
+        } else {
+          rayResults.push({ attackRoll, totalAttack, hit: false })
+        }
+      }
+
+      logEntry.rayResults = rayResults
+      logEntry.hitsCount = hitsCount
+      logEntry.hit = hitsCount > 0
+      logEntry.damageRoll = totalDamage
+      logEntry.targetHpBefore = target.currentHp
+      target.currentHp = Math.max(0, target.currentHp - totalDamage)
+      logEntry.targetHpAfter = target.currentHp
+    } else {
+      // Single attack spell
+      const attackRoll = rollD20()
+      const totalAttack = attackRoll + (caster.spellAttackBonus || 0)
+      logEntry.attackRoll = attackRoll
+      logEntry.totalAttack = totalAttack
+      logEntry.targetAC = target.armorClass
+
+      if (attackRoll === 1) {
+        logEntry.hit = false
+        return logEntry
+      }
+
+      const isCritical = attackRoll === 20
+      const hit = isCritical || totalAttack >= target.armorClass
+
+      if (!hit) {
+        logEntry.hit = false
+        return logEntry
+      }
+
+      logEntry.hit = true
+      logEntry.isCritical = isCritical
+
+      const { total: damage } = rollDice(damageDice)
+      const finalDamage = isCritical ? damage * 2 : damage // Simplified crit
+
+      logEntry.damageRoll = finalDamage
+      logEntry.targetHpBefore = target.currentHp
+      target.currentHp = Math.max(0, target.currentHp - finalDamage)
+      logEntry.targetHpAfter = target.currentHp
     }
-
-    const isCritical = attackRoll === 20
-    const hit = isCritical || totalAttack >= target.armorClass
-
-    if (!hit) {
-      logEntry.hit = false
-      return logEntry
-    }
-
-    logEntry.hit = true
-    logEntry.isCritical = isCritical
-
-    const { total: damage } = rollDice(damageDice)
-    const finalDamage = isCritical ? damage * 2 : damage // Simplified crit
-
-    logEntry.damageRoll = finalDamage
-    logEntry.targetHpBefore = target.currentHp
-    target.currentHp = Math.max(0, target.currentHp - finalDamage)
-    logEntry.targetHpAfter = target.currentHp
   }
   // Saving throw spell
   else if (spell.saveAbility) {
@@ -489,7 +531,7 @@ export function selectSpellToCast(caster, allies, enemies) {
     }
   }
 
-  // Priority 2: Fireball if 2+ enemies in same position
+  // Priority 2: Fireball if 2+ enemies in same position (and safe from friendly fire)
   const fireball = knownSpells.find(s => s.key === 'fireball')
   if (fireball) {
     const slot = findAvailableSlot(caster, 3)
@@ -525,26 +567,62 @@ export function selectSpellToCast(caster, allies, enemies) {
     }
   }
 
-  // Priority 4: Magic Missile for guaranteed damage
-  const magicMissile = knownSpells.find(s => s.key === 'magic-missile')
-  if (magicMissile && livingEnemies.length > 0) {
-    const slot = findAvailableSlot(caster, 1)
+  // Priority 4: Scorching Ray for multi-attack damage
+  const scorchingRay = knownSpells.find(s => s.key === 'scorching-ray')
+  if (scorchingRay && livingEnemies.length > 0) {
+    const slot = findAvailableSlot(caster, 2)
     if (slot) {
+      // Target lowest HP enemy to maximize kill chance
+      const target = [...livingEnemies].sort((a, b) => a.currentHp - b.currentHp)[0]
       return {
-        spell: magicMissile,
+        spell: scorchingRay,
         slotLevel: slot,
-        target: livingEnemies[0] // Lowest HP enemy
+        target
       }
     }
   }
 
-  // Priority 5: Cantrip
+  // Priority 5: Magic Missile for guaranteed damage
+  const magicMissile = knownSpells.find(s => s.key === 'magic-missile')
+  if (magicMissile && livingEnemies.length > 0) {
+    const slot = findAvailableSlot(caster, 1)
+    if (slot) {
+      // Target lowest HP enemy
+      const target = [...livingEnemies].sort((a, b) => a.currentHp - b.currentHp)[0]
+      return {
+        spell: magicMissile,
+        slotLevel: slot,
+        target
+      }
+    }
+  }
+
+  // Priority 6: Any other slotted single-target damage spell
+  const slottedDamage = knownSpells.filter(s =>
+    s.level > 0 &&
+    s.effectType === 'damage' &&
+    s.targetType === 'single'
+  )
+  for (const spell of slottedDamage) {
+    const slot = findAvailableSlot(caster, spell.level)
+    if (slot && livingEnemies.length > 0) {
+      const target = [...livingEnemies].sort((a, b) => a.currentHp - b.currentHp)[0]
+      return {
+        spell,
+        slotLevel: slot,
+        target
+      }
+    }
+  }
+
+  // Priority 7: Cantrip as fallback
   const cantrips = knownSpells.filter(s => s.level === 0 && s.effectType === 'damage')
   if (cantrips.length > 0 && livingEnemies.length > 0) {
+    const target = [...livingEnemies].sort((a, b) => a.currentHp - b.currentHp)[0]
     return {
       spell: cantrips[0],
       slotLevel: 0,
-      target: livingEnemies[0]
+      target
     }
   }
 
