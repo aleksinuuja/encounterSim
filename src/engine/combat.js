@@ -50,6 +50,49 @@ import {
   shouldUseLegendaryResistance,
   useLegendaryResistance
 } from './damage.js'
+import {
+  initResources,
+  resetTurnResources,
+  resetRoundResources,
+  tickRage,
+  hasResource
+} from './resources.js'
+import {
+  executeActionSurge,
+  executeRage,
+  executeRecklessAttack,
+  getRageBonus,
+  applyRageResistance,
+  getBrutalCriticalBonus,
+  applySneakAttack,
+  executeUncannyDodge,
+  applyEvasion,
+  executeLayOnHands,
+  executeDivineSmite,
+  getImprovedSmiteDamage,
+  getAuraOfProtectionBonus,
+  executeFlurryOfBlows,
+  executePatientDefense,
+  executeStunningStrike,
+  executeBardicInspiration,
+  executeCunningAction,
+  getFightingStyleAttackBonus,
+  getFightingStyleDamageBonus,
+  getFightingStyleACBonus
+} from './classAbilities.js'
+import {
+  shouldUseActionSurge,
+  shouldRage,
+  shouldUseRecklessAttack,
+  shouldUseLayOnHands,
+  shouldDivineSmite,
+  selectMonkBonusAction,
+  shouldUseStunningStrike,
+  shouldUseUncannyDodge,
+  shouldUseBardicInspiration,
+  selectCunningAction,
+  selectClassBonusAction
+} from './classAI.js'
 
 /**
  * Roll initiative for all combatants and return sorted order
@@ -57,42 +100,48 @@ import {
  * @returns {Array} - Combatants with initiativeRoll, sorted by initiative
  */
 function rollInitiative(combatants) {
-  const withInitiative = combatants.map(c => ({
-    ...c,
-    currentHp: c.maxHp,
-    initiativeRoll: rollD20() + c.initiativeBonus,
-    isUnconscious: false,
-    isStabilized: false,
-    isDead: false,
-    deathSaveSuccesses: 0,
-    deathSaveFailures: 0,
-    conditions: [], // v0.4: Track active conditions
-    // v0.6: Spellcasting state
-    currentSlots: c.spellSlots ? { ...c.spellSlots } : null,
-    concentratingOn: null,
-    // v0.7: Action economy
-    hasAction: true,
-    hasBonusAction: true,
-    hasReaction: true,
-    actionSurgeUsed: false,
-    secondWindUsed: false,
-    shieldActive: false,
-    spiritualWeapon: null,
-    // v0.8: Advanced monster abilities
-    currentLegendaryActions: c.legendaryActions || 0,
-    // v0.10: Legendary resistance (auto-succeed failed saves)
-    currentLegendaryResistances: c.legendaryResistances || 0,
-    // Deep copy recharge abilities to track availability per combat
-    rechargeAbilities: c.rechargeAbilities
-      ? c.rechargeAbilities.map(a => ({ ...a, available: true }))
-      : null,
-    // v0.10: Frightful Presence (deep copy for availability tracking)
-    frightfulPresence: c.frightfulPresence
-      ? { ...c.frightfulPresence, available: true }
-      : null,
-    // v0.9: Position for AOE targeting (front/back)
-    position: c.position || getDefaultPosition(c)
-  }))
+  const withInitiative = combatants.map(c => {
+    // Base combatant state
+    const base = {
+      ...c,
+      currentHp: c.maxHp,
+      initiativeRoll: rollD20() + c.initiativeBonus,
+      isUnconscious: false,
+      isStabilized: false,
+      isDead: false,
+      deathSaveSuccesses: 0,
+      deathSaveFailures: 0,
+      conditions: [], // v0.4: Track active conditions
+      // v0.6: Spellcasting state
+      currentSlots: c.spellSlots ? { ...c.spellSlots } : null,
+      concentratingOn: null,
+      // v0.7: Action economy
+      hasAction: true,
+      hasBonusAction: true,
+      hasReaction: true,
+      actionSurgeUsed: false,
+      secondWindUsed: false,
+      shieldActive: false,
+      spiritualWeapon: null,
+      // v0.8: Advanced monster abilities
+      currentLegendaryActions: c.legendaryActions || 0,
+      // v0.10: Legendary resistance (auto-succeed failed saves)
+      currentLegendaryResistances: c.legendaryResistances || 0,
+      // Deep copy recharge abilities to track availability per combat
+      rechargeAbilities: c.rechargeAbilities
+        ? c.rechargeAbilities.map(a => ({ ...a, available: true }))
+        : null,
+      // v0.10: Frightful Presence (deep copy for availability tracking)
+      frightfulPresence: c.frightfulPresence
+        ? { ...c.frightfulPresence, available: true }
+        : null,
+      // v0.9: Position for AOE targeting (front/back)
+      position: c.position || getDefaultPosition(c)
+    }
+
+    // v0.11: Initialize class resources (full resources = fresh party)
+    return initResources(base)
+  })
 
   // Sort by initiative (descending)
   // Ties: players before monsters, then alphabetical
@@ -480,6 +529,11 @@ export function runCombat(party, monsters, simulationId) {
       combatant.hasReaction = true // Reaction resets at start of YOUR turn
       combatant.shieldActive = false // Shield expires at start of your turn
 
+      // v0.11: Reset per-turn class resources
+      Object.assign(combatant, resetTurnResources(combatant))
+      combatant.hasActionSurgeThisTurn = false
+      combatant.foeSlayerUsedThisTurn = false
+
       // Handle unconscious combatants
       if (combatant.isUnconscious) {
         // Stabilized combatants don't roll death saves
@@ -698,8 +752,37 @@ export function runCombat(party, monsters, simulationId) {
           }
         }
       } else {
+        // v0.11: Pre-attack class abilities
+
+        // Barbarian: Rage before attacking
+        if (combatant.class === 'barbarian' && shouldRage(combatant, round, enemies)) {
+          const rageLog = executeRage(combatant, round, turnInRound)
+          if (rageLog) log.push(rageLog)
+        }
+
+        // Barbarian: Reckless Attack decision
+        const firstTarget = combatant.tacticalAI
+          ? selectTacticalTarget(combatants, combatant.isPlayer, { canReachBackline: false })
+          : selectTarget(combatants, combatant.isPlayer)
+
+        if (combatant.class === 'barbarian' && firstTarget && shouldUseRecklessAttack(combatant, firstTarget, allies, enemies)) {
+          const recklessLog = executeRecklessAttack(combatant, round, turnInRound)
+          if (recklessLog) log.push(recklessLog)
+        }
+
+        // Fighter: Action Surge decision
+        if (combatant.class === 'fighter' && firstTarget && shouldUseActionSurge(combatant, firstTarget, allies, enemies)) {
+          const surgeLog = executeActionSurge(combatant, round, turnInRound)
+          if (surgeLog) log.push(surgeLog)
+        }
+
+        // Calculate total attacks (including Action Surge)
+        let numAttacks = combatant.numAttacks || 1
+        if (combatant.hasActionSurgeThisTurn) {
+          numAttacks *= 2 // Action Surge doubles attacks
+        }
+
         // Execute standard attacks (multi-attack support)
-        const numAttacks = combatant.numAttacks || 1
         for (let attackNum = 0; attackNum < numAttacks; attackNum++) {
           // Find a target for this attack
           // Tactical AI (intelligent monsters) prioritizes high-threat targets
@@ -736,14 +819,29 @@ export function runCombat(party, monsters, simulationId) {
 
       // v0.7: Process bonus action (if not already used by spell)
       if (combatant.hasBonusAction) {
-        const bonusAction = selectBonusAction(combatant, allies, enemies)
+        // v0.11: Check for class-specific bonus actions first
+        const classBonus = selectClassBonusAction(combatant, allies, enemies)
+        const bonusAction = classBonus || selectBonusAction(combatant, allies, enemies)
+
         if (bonusAction) {
           let baLog = null
           const baTarget = bonusAction.target || (combatant.tacticalAI
             ? selectTacticalTarget(combatants, combatant.isPlayer, { canReachBackline: false })
             : selectTarget(combatants, combatant.isPlayer))
 
-          if (bonusAction.type === 'spiritualWeapon' && baTarget) {
+          // v0.11: Class-specific bonus actions
+          if (bonusAction.type === 'rage') {
+            baLog = executeRage(combatant, round, turnInRound)
+          } else if (bonusAction.type === 'flurryOfBlows' && baTarget) {
+            baLog = executeFlurryOfBlows(combatant, baTarget, round, turnInRound)
+          } else if (bonusAction.type === 'patientDefense') {
+            baLog = executePatientDefense(combatant, round, turnInRound)
+          } else if (bonusAction.type === 'bardicInspiration' && bonusAction.target) {
+            baLog = executeBardicInspiration(combatant, bonusAction.target, round, turnInRound)
+          } else if (bonusAction.type === 'cunningAction' && bonusAction.cunningActionType) {
+            baLog = executeCunningAction(combatant, bonusAction.cunningActionType, round, turnInRound)
+          // Original bonus actions
+          } else if (bonusAction.type === 'spiritualWeapon' && baTarget) {
             baLog = executeSpiritualWeaponAttack(combatant, baTarget, round, turnInRound)
           } else if (bonusAction.type === 'secondWind') {
             baLog = executeSecondWind(combatant, round, turnInRound)
@@ -821,6 +919,11 @@ export function runCombat(party, monsters, simulationId) {
       if (c.legendaryActions > 0) {
         c.currentLegendaryActions = c.legendaryActions
       }
+      // v0.11: Tick rage duration and reset per-round flags
+      Object.assign(c, tickRage(c))
+      Object.assign(c, resetRoundResources(c))
+      // Reset reckless attack (expires at start of next turn)
+      c.recklessUntilNextTurn = false
     })
 
     round++

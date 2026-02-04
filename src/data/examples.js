@@ -1,11 +1,16 @@
 /**
  * Example party and monster data for testing
+ * Updated with class-based characters (v0.11)
  */
+
+import { initializeClassResources } from './classTemplates.js'
 
 export const exampleParty = [
   {
     id: 'fighter-1',
     name: 'Fighter',
+    class: 'fighter',
+    level: 5,
     maxHp: 44,
     armorClass: 18,
     attackBonus: 7,
@@ -14,16 +19,28 @@ export const exampleParty = [
     isPlayer: true,
     numAttacks: 2,
     healingDice: null,
-    level: 5,
     position: 'front',
+    fightingStyle: 'dueling',
+    // Ability modifiers
+    strMod: 4,
+    dexMod: 2,
+    conMod: 3,
+    intMod: 0,
+    wisMod: 1,
+    chaMod: 0,
+    proficiencyBonus: 3,
     // v0.7: Action economy features
     hasSecondWind: true,
     hasActionSurge: true,
-    constitutionSave: 5
+    constitutionSave: 5,
+    // v0.11: Class resources
+    classResources: initializeClassResources('fighter', 5)
   },
   {
     id: 'rogue-1',
     name: 'Rogue',
+    class: 'rogue',
+    level: 5,
     maxHp: 33,
     armorClass: 15,
     attackBonus: 7,
@@ -32,16 +49,27 @@ export const exampleParty = [
     isPlayer: true,
     numAttacks: 1,
     healingDice: null,
-    level: 5,
     position: 'front',
+    // Ability modifiers
+    strMod: 0,
+    dexMod: 4,
+    conMod: 2,
+    intMod: 1,
+    wisMod: 1,
+    chaMod: 0,
+    proficiencyBonus: 3,
     // v0.7: Two-weapon fighting
     hasTwoWeaponFighting: true,
     offHandDamage: '1d6',
-    dexteritySave: 7
+    dexteritySave: 7,
+    // v0.11: Class resources
+    classResources: initializeClassResources('rogue', 5)
   },
   {
     id: 'cleric-1',
     name: 'Cleric',
+    class: 'cleric',
+    level: 5,
     maxHp: 38,
     armorClass: 18,
     attackBonus: 6,
@@ -51,19 +79,30 @@ export const exampleParty = [
     numAttacks: 1,
     healingDice: '1d8+3',
     position: 'front',
+    // Ability modifiers
+    strMod: 2,
+    dexMod: 0,
+    conMod: 2,
+    intMod: 0,
+    wisMod: 4,
+    chaMod: 1,
+    proficiencyBonus: 3,
     // v0.6: Spellcasting
     spellcastingAbility: 'wisdom',
     spellcastingMod: 4,
     spellSaveDC: 14,
     spellAttackBonus: 6,
-    level: 5,
     spellSlots: { 1: 4, 2: 3, 3: 2 },
     cantrips: ['sacred-flame', 'toll-the-dead'],
-    spells: ['healing-word', 'cure-wounds', 'bless']
+    spells: ['healing-word', 'cure-wounds', 'bless'],
+    // v0.11: Class resources
+    classResources: initializeClassResources('cleric', 5)
   },
   {
     id: 'sorcerer-1',
     name: 'Sorcerer',
+    class: 'sorcerer',
+    level: 5,
     maxHp: 28,
     armorClass: 13,
     attackBonus: 7,
@@ -73,29 +112,167 @@ export const exampleParty = [
     numAttacks: 1,
     healingDice: null,
     position: 'back',
+    // Ability modifiers
+    strMod: -1,
+    dexMod: 2,
+    conMod: 2,
+    intMod: 0,
+    wisMod: 1,
+    chaMod: 4,
+    proficiencyBonus: 3,
     // v0.6: Spellcasting
     spellcastingAbility: 'charisma',
     spellcastingMod: 4,
     spellSaveDC: 14,
     spellAttackBonus: 6,
-    level: 5,
     spellSlots: { 1: 4, 2: 3, 3: 2 },
     cantrips: ['fire-bolt'],
-    spells: ['magic-missile', 'fireball', 'scorching-ray']
+    spells: ['magic-missile', 'fireball', 'scorching-ray'],
+    // v0.11: Class resources (sorcery points)
+    classResources: initializeClassResources('sorcerer', 5)
   },
   {
     id: 'ranger-1',
     name: 'Ranger',
+    class: 'ranger',
+    level: 5,
     maxHp: 42,
     armorClass: 15,
     attackBonus: 7,
     damage: '1d8+4',
     initiativeBonus: 3,
     isPlayer: true,
-    numAttacks: 1,
+    numAttacks: 2,
     healingDice: null,
     position: 'back',
-    attackType: 'ranged'
+    fightingStyle: 'archery',
+    attackType: 'ranged',
+    // Ability modifiers
+    strMod: 0,
+    dexMod: 4,
+    conMod: 2,
+    intMod: 0,
+    wisMod: 2,
+    chaMod: 0,
+    proficiencyBonus: 3,
+    // v0.11: Class resources
+    classResources: initializeClassResources('ranger', 5)
+  }
+]
+
+// Alternative party with different classes
+export const examplePartyMartial = [
+  {
+    id: 'barbarian-1',
+    name: 'Barbarian',
+    class: 'barbarian',
+    level: 5,
+    maxHp: 55,
+    armorClass: 14,
+    attackBonus: 7,
+    damage: '2d6+4',
+    initiativeBonus: 2,
+    isPlayer: true,
+    numAttacks: 2,
+    healingDice: null,
+    position: 'front',
+    // Ability modifiers
+    strMod: 4,
+    dexMod: 2,
+    conMod: 3,
+    intMod: -1,
+    wisMod: 1,
+    chaMod: 0,
+    proficiencyBonus: 3,
+    // v0.11: Class resources (rage)
+    classResources: initializeClassResources('barbarian', 5)
+  },
+  {
+    id: 'paladin-1',
+    name: 'Paladin',
+    class: 'paladin',
+    level: 5,
+    maxHp: 47,
+    armorClass: 20,
+    attackBonus: 7,
+    damage: '1d8+4',
+    initiativeBonus: 0,
+    isPlayer: true,
+    numAttacks: 2,
+    healingDice: null,
+    position: 'front',
+    fightingStyle: 'defense',
+    // Ability modifiers
+    strMod: 4,
+    dexMod: 0,
+    conMod: 2,
+    intMod: -1,
+    wisMod: 1,
+    chaMod: 3,
+    proficiencyBonus: 3,
+    // Spellcasting
+    spellSlots: { 1: 4, 2: 2 },
+    spellcastingMod: 3,
+    // v0.11: Class resources (lay on hands, channel divinity)
+    classResources: initializeClassResources('paladin', 5)
+  },
+  {
+    id: 'monk-1',
+    name: 'Monk',
+    class: 'monk',
+    level: 5,
+    maxHp: 38,
+    armorClass: 16,
+    attackBonus: 7,
+    damage: '1d6+4',
+    initiativeBonus: 4,
+    isPlayer: true,
+    numAttacks: 2,
+    healingDice: null,
+    position: 'front',
+    // Ability modifiers
+    strMod: 0,
+    dexMod: 4,
+    conMod: 2,
+    intMod: 0,
+    wisMod: 3,
+    chaMod: -1,
+    proficiencyBonus: 3,
+    // v0.11: Class resources (ki)
+    classResources: initializeClassResources('monk', 5)
+  },
+  {
+    id: 'bard-1',
+    name: 'Bard',
+    class: 'bard',
+    level: 5,
+    maxHp: 33,
+    armorClass: 15,
+    attackBonus: 6,
+    damage: '1d6+3',
+    initiativeBonus: 3,
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: '1d4+4',
+    position: 'back',
+    // Ability modifiers
+    strMod: -1,
+    dexMod: 3,
+    conMod: 2,
+    intMod: 0,
+    wisMod: 1,
+    chaMod: 4,
+    proficiencyBonus: 3,
+    // Spellcasting
+    spellcastingAbility: 'charisma',
+    spellcastingMod: 4,
+    spellSaveDC: 14,
+    spellAttackBonus: 6,
+    spellSlots: { 1: 4, 2: 3, 3: 2 },
+    cantrips: ['vicious-mockery'],
+    spells: ['healing-word', 'dissonant-whispers', 'hypnotic-pattern'],
+    // v0.11: Class resources (bardic inspiration)
+    classResources: initializeClassResources('bard', 5, { charisma: 4 })
   }
 ]
 
@@ -158,5 +335,121 @@ export const exampleMonsters = [
     isPlayer: false,
     numAttacks: 1,
     healingDice: null
+  }
+]
+
+// High-level encounter example (Level 10 party vs. Adult Dragon)
+export const exampleHighLevelParty = [
+  {
+    id: 'fighter-10',
+    name: 'Champion Fighter',
+    class: 'fighter',
+    level: 10,
+    maxHp: 84,
+    armorClass: 20,
+    attackBonus: 9,
+    damage: '1d8+5',
+    initiativeBonus: 2,
+    isPlayer: true,
+    numAttacks: 3,
+    healingDice: null,
+    position: 'front',
+    fightingStyle: 'dueling',
+    strMod: 5,
+    dexMod: 2,
+    conMod: 4,
+    intMod: 0,
+    wisMod: 1,
+    chaMod: 0,
+    proficiencyBonus: 4,
+    hasSecondWind: true,
+    hasActionSurge: true,
+    classResources: initializeClassResources('fighter', 10)
+  },
+  {
+    id: 'paladin-10',
+    name: 'Oath of Devotion',
+    class: 'paladin',
+    level: 10,
+    maxHp: 84,
+    armorClass: 21,
+    attackBonus: 9,
+    damage: '1d8+5',
+    initiativeBonus: 0,
+    isPlayer: true,
+    numAttacks: 2,
+    healingDice: null,
+    position: 'front',
+    fightingStyle: 'defense',
+    strMod: 5,
+    dexMod: 0,
+    conMod: 3,
+    intMod: -1,
+    wisMod: 1,
+    chaMod: 4,
+    proficiencyBonus: 4,
+    spellSlots: { 1: 4, 2: 3, 3: 2 },
+    spellcastingMod: 4,
+    classResources: initializeClassResources('paladin', 10)
+  },
+  {
+    id: 'wizard-10',
+    name: 'Evoker Wizard',
+    class: 'wizard',
+    level: 10,
+    maxHp: 52,
+    armorClass: 14,
+    attackBonus: 9,
+    damage: '3d10', // Fire Bolt
+    initiativeBonus: 2,
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: null,
+    position: 'back',
+    intMod: 5,
+    dexMod: 2,
+    conMod: 2,
+    strMod: -1,
+    wisMod: 1,
+    chaMod: 0,
+    proficiencyBonus: 4,
+    spellcastingAbility: 'intelligence',
+    spellcastingMod: 5,
+    spellSaveDC: 17,
+    spellAttackBonus: 9,
+    spellSlots: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+    cantrips: ['fire-bolt'],
+    spells: ['fireball', 'counterspell', 'wall-of-force'],
+    classResources: initializeClassResources('wizard', 10)
+  },
+  {
+    id: 'cleric-10',
+    name: 'Life Cleric',
+    class: 'cleric',
+    level: 10,
+    maxHp: 73,
+    armorClass: 20,
+    attackBonus: 8,
+    damage: '3d8', // Toll the Dead
+    initiativeBonus: 0,
+    isPlayer: true,
+    numAttacks: 1,
+    healingDice: '3d8+5',
+    position: 'back',
+    wisMod: 5,
+    dexMod: 0,
+    conMod: 3,
+    strMod: 1,
+    intMod: 0,
+    chaMod: 1,
+    proficiencyBonus: 4,
+    spellcastingAbility: 'wisdom',
+    spellcastingMod: 5,
+    spellSaveDC: 17,
+    spellAttackBonus: 9,
+    spellSlots: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+    cantrips: ['sacred-flame', 'toll-the-dead'],
+    spells: ['healing-word', 'cure-wounds', 'spirit-guardians', 'spiritual-weapon'],
+    classResources: initializeClassResources('cleric', 10)
   }
 ]

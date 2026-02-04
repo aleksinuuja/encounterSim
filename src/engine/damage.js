@@ -7,20 +7,28 @@
  * @param {object} target - The target taking damage
  * @param {number} damage - Raw damage amount
  * @param {string} damageType - Type of damage (fire, cold, etc.)
- * @returns {{ finalDamage: number, immune: boolean, resistant: boolean }}
+ * @returns {{ finalDamage: number, immune: boolean, resistant: boolean, rageResisted: boolean }}
  */
 export function applyDamage(target, damage, damageType) {
   // Check immunity first
   if (target.damageImmunities?.includes(damageType)) {
-    return { finalDamage: 0, immune: true, resistant: false }
+    return { finalDamage: 0, immune: true, resistant: false, rageResisted: false }
   }
 
   // Check resistance
   if (target.damageResistances?.includes(damageType)) {
-    return { finalDamage: Math.floor(damage / 2), immune: false, resistant: true }
+    return { finalDamage: Math.floor(damage / 2), immune: false, resistant: true, rageResisted: false }
   }
 
-  return { finalDamage: damage, immune: false, resistant: false }
+  // v0.11: Barbarian rage resistance (B/P/S only)
+  if (target.isRaging && target.class === 'barbarian') {
+    const physicalTypes = ['bludgeoning', 'piercing', 'slashing']
+    if (physicalTypes.includes(damageType?.toLowerCase())) {
+      return { finalDamage: Math.floor(damage / 2), immune: false, resistant: false, rageResisted: true }
+    }
+  }
+
+  return { finalDamage: damage, immune: false, resistant: false, rageResisted: false }
 }
 
 /**

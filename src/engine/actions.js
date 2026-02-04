@@ -4,6 +4,7 @@
  */
 
 import { rollD20, rollDice } from './dice.js'
+import { hasResource } from './resources.js'
 
 /**
  * Execute an off-hand attack (two-weapon fighting)
@@ -292,7 +293,9 @@ export function selectBonusAction(combatant, allies, enemies) {
   }
 
   // Priority 2: Second Wind if hurt (below 50% HP)
-  if (combatant.hasSecondWind && !combatant.secondWindUsed) {
+  // v0.11: Check resource instead of secondWindUsed flag
+  const hasSecondWindResource = hasResource(combatant, 'secondWind', 1)
+  if ((combatant.hasSecondWind || hasSecondWindResource) && !combatant.secondWindUsed) {
     if (combatant.currentHp < combatant.maxHp * 0.5) {
       return { type: 'secondWind' }
     }
