@@ -3,11 +3,15 @@ import CombatantForm from './CombatantForm'
 import { exampleMonsters } from '../data/examples'
 import { monsterPresets } from '../data/monsterPresets'
 import { generateId } from '../utils/ids'
+import { parseStatblock } from '../utils/statblockParser'
 
 function MonsterSetup({ monsters, setMonsters }) {
   const [showForm, setShowForm] = useState(false)
   const [editingCombatant, setEditingCombatant] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showStatblock, setShowStatblock] = useState(false)
+  const [statblockText, setStatblockText] = useState('')
+  const [statblockError, setStatblockError] = useState(null)
   const dropdownRef = useRef(null)
 
   // Close dropdown when clicking outside
@@ -63,11 +67,28 @@ function MonsterSetup({ monsters, setMonsters }) {
     setMonsters(exampleMonsters.map(c => ({ ...c, id: generateId('monster') })))
   }
 
+  const handleParseStatblock = () => {
+    if (!statblockText.trim()) return
+    setStatblockError(null)
+
+    try {
+      const combatant = parseStatblock(statblockText.trim())
+      setMonsters([...monsters, { ...combatant, id: generateId('monster'), isPlayer: false }])
+      setStatblockText('')
+      setShowStatblock(false)
+    } catch (err) {
+      setStatblockError('Failed to parse statblock: ' + err.message)
+    }
+  }
+
   return (
     <div className="setup-section">
       <div className="section-header">
         <h2>Monsters</h2>
         <div className="section-actions">
+          <button className="btn btn-secondary btn-sm" onClick={() => { setShowStatblock(!showStatblock); setShowForm(false) }}>
+            Paste Statblock
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={loadExample}>
             Load Example
           </button>
@@ -105,6 +126,36 @@ function MonsterSetup({ monsters, setMonsters }) {
           </div>
         </div>
       </div>
+
+      {showStatblock && (
+        <div className="import-section">
+          <textarea
+            className="statblock-input"
+            value={statblockText}
+            onChange={e => setStatblockText(e.target.value)}
+            placeholder={"Paste a monster statblock here...\n\nExample:\nOrc\nMedium humanoid, chaotic evil\n\nArmor Class 13\nHit Points 15 (2d8 + 6)\n..."}
+            rows={8}
+          />
+          <div className="import-row">
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleParseStatblock}
+              disabled={!statblockText.trim()}
+            >
+              Parse & Add
+            </button>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => { setShowStatblock(false); setStatblockText(''); setStatblockError(null) }}
+            >
+              Cancel
+            </button>
+          </div>
+          {statblockError && (
+            <p className="import-error">{statblockError}</p>
+          )}
+        </div>
+      )}
 
       {monsters.length === 0 ? (
         <p className="empty-state">No monsters. Add some or load an example.</p>
